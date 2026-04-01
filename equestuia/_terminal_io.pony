@@ -5,6 +5,7 @@ trait tag TerminalOutput
 trait tag TerminalInput
   """Abstraction for terminal input. Forwards raw bytes to a listener."""
   be subscribe(listener: _InputListener tag)
+  be dispose()
 
 trait tag _InputListener
   """Internal trait for receiving raw bytes from a TerminalInput."""
@@ -39,3 +40,11 @@ actor StdinInput is TerminalInput
           None
       end,
       512)
+
+  be dispose() =>
+    """
+    Stop reading input. Passing None unsubscribes the ASIO event on stdin,
+    allowing the runtime to shut down once no actors have pending work.
+    """
+    _listener = None
+    _env.input(None, 0)

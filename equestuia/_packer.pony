@@ -31,13 +31,13 @@ primitive Packer
     // Separate into pack_start and pack_end, preserving original indices.
     let start_indices = Array[USize]
     let end_indices = Array[USize]
-    for i in Range(0, children.size()) do
+    for ci in Range(0, children.size()) do
       try
-        (_, let opt) = children(i)?
+        (_, let opt) = children(ci)?
         if opt.from_end then
-          end_indices.push(i)
+          end_indices.push(ci)
         else
-          start_indices.push(i)
+          start_indices.push(ci)
         end
       end
     end
@@ -46,9 +46,9 @@ primitive Packer
     var total_preferred: USize = 0
     var total_padding: USize = 0
     var expand_count: USize = 0
-    for i in Range(0, children.size()) do
+    for ti in Range(0, children.size()) do
       try
-        (let hint, let opt) = children(i)?
+        (let hint, let opt) = children(ti)?
         let pref = match axis
         | Horizontal => hint.preferred_width
         | Vertical => hint.preferred_height
@@ -90,11 +90,11 @@ primitive Packer
 
     // Track which expand child is the last one (gets remainder).
     var last_expand_idx: USize = 0
-    for i in Range(0, children.size()) do
+    for ei in Range(0, children.size()) do
       try
-        (_, let opt) = children(i)?
+        (_, let opt) = children(ei)?
         if opt.expand then
-          last_expand_idx = i
+          last_expand_idx = ei
         end
       end
     end

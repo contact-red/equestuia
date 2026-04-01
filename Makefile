@@ -2,7 +2,7 @@ PACKAGE := equestuia
 BUILD_DIR := build
 SOURCE_FILES := $(shell find $(PACKAGE) -name '*.pony')
 
-.PHONY: test clean fetch
+.PHONY: test clean fetch counter
 
 test: fetch $(BUILD_DIR)/$(PACKAGE)
 	$(BUILD_DIR)/$(PACKAGE)
@@ -15,6 +15,9 @@ $(BUILD_DIR):
 
 fetch:
 	corral fetch
+
+counter: fetch | $(BUILD_DIR)
+	corral run -- ponyc -o $(BUILD_DIR) examples/counter
 
 clean:
 	rm -rf $(BUILD_DIR)

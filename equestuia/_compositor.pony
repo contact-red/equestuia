@@ -190,8 +190,8 @@ actor Compositor is _WidgetParent
   fun _sorted_indices(): Array[USize] =>
     """Return widget indices sorted by z_order ascending (insertion sort)."""
     let indices = Array[USize](_widgets.size())
-    for i in Range(0, _widgets.size()) do
-      indices.push(i)
+    for idx in Range(0, _widgets.size()) do
+      indices.push(idx)
     end
     // Insertion sort by z_order
     var i: USize = 1
