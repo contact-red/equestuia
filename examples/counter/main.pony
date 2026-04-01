@@ -42,49 +42,29 @@ actor Counter is Widget
     let cells = recover val
       let size = _width * _height
       let arr = Array[Cell](size)
+      for i in Range(0, size) do
+        arr.push(Cell.empty())
+      end
 
-      for row in Range(0, _height) do
-        for col in Range(0, _width) do
-          let is_top = (row == 0)
-          let is_bottom = (row == (_height - 1))
-          let is_left = (col == 0)
-          let is_right = (col == (_width - 1))
+      DrawingPrimitives.draw_box(arr, _width, _height, _width, _height, border_color)
 
-          if is_top and is_left then
-            arr.push(Cell(0x250C, 1, border_color, Default, 0)) // ┌
-          elseif is_top and is_right then
-            arr.push(Cell(0x2510, 1, border_color, Default, 0)) // ┐
-          elseif is_bottom and is_left then
-            arr.push(Cell(0x2514, 1, border_color, Default, 0)) // └
-          elseif is_bottom and is_right then
-            arr.push(Cell(0x2518, 1, border_color, Default, 0)) // ┘
-          elseif is_top or is_bottom then
-            arr.push(Cell(0x2500, 1, border_color, Default, 0)) // ─
-          elseif is_left or is_right then
-            arr.push(Cell(0x2502, 1, border_color, Default, 0)) // │
-          elseif (row == 2) and ((col - 1) < label.size()) then
-            try
-              arr.push(Cell(label(col - 1)?.u32(), 1, text_color, Default, 0))
-            else
-              arr.push(Cell.empty())
-            end
-          elseif (row == 4) and (col >= 1) and (col <= 16) then
-            let help = "Up/Down  q=quit"
-            let idx = col - 1
-            if idx < help.size() then
-              try
-                arr.push(Cell(help(idx)?.u32(), 1, Cyan, Default, 0))
-              else
-                arr.push(Cell.empty())
-              end
-            else
-              arr.push(Cell.empty())
-            end
-          else
-            arr.push(Cell.empty())
-          end
+      // Label on row 2
+      for col in Range(0, label.size().min(_width - 2)) do
+        try
+          arr((2 * _width) + col + 1)? =
+            Cell(label(col)?.u32(), 1, text_color, Default, 0)
         end
       end
+
+      // Help text on row 4
+      let help = "Up/Down  q=quit"
+      for col in Range(0, help.size().min(_width - 2)) do
+        try
+          arr((4 * _width) + col + 1)? =
+            Cell(help(col)?.u32(), 1, Cyan, Default, 0)
+        end
+      end
+
       arr
     end
 
@@ -137,3 +117,4 @@ actor Main
     compositor.register(counter, viewport)
     input_actor.register_focusable(counter)
     counter.trigger_render()
+
