@@ -21,16 +21,16 @@ actor InputActor is (InputListener & _HitTestRequester)
   """
   var _parser: InputParser ref
   let _compositor: Compositor tag
-  let _focus_list: Array[WidgetBase tag]
-  let _resize_list: Array[Resizable tag]
+  let _focus_list: Array[Widget tag]
+  let _resize_list: Array[Widget tag]
   var _focus_index: USize = 0
   var _pending_mouse: (MouseEvent | None) = None
 
   new create(input: TerminalInput tag, compositor: Compositor tag) =>
     _parser = InputParser
     _compositor = compositor
-    _focus_list = Array[WidgetBase tag]
-    _resize_list = Array[Resizable tag]
+    _focus_list = Array[Widget tag]
+    _resize_list = Array[Widget tag]
     input.subscribe(this)
     ifdef not windows then
       SignalHandler(recover _WinchNotify(this) end, Sig.winch())
@@ -44,29 +44,28 @@ actor InputActor is (InputListener & _HitTestRequester)
     (let w, let h) = TermSize()
     _route_resize(ResizeEvent(w, h))
 
-  be register_focusable(widget: WidgetBase tag) =>
+  be register_focusable(widget: Widget tag) =>
     """
     Add a widget to the focus list. The first registered widget receives
-    focus automatically. Also registers for resize notifications.
+    focus automatically.
     """
     _focus_list.push(widget)
-    // First registered widget gets focus
     if _focus_list.size() == 1 then
       widget.receive_focus()
     end
 
-  be register_resizable(widget: Resizable tag) =>
+  be register_widget(widget: Widget tag) =>
     """
     Register a widget for resize notifications without adding to focus list.
     """
     _resize_list.push(widget)
 
-  be unregister_focusable(widget: WidgetBase tag) =>
+  be unregister_focusable(widget: Widget tag) =>
     """
     Remove a widget from the focus list and adjust the focus index.
     """
     try
-      let idx = _find_widget(widget)?
+      let idx = _find_in_focus_list(widget)?
       _focus_list.delete(idx)?
       if _focus_list.size() == 0 then
         _focus_index = 0
@@ -131,7 +130,7 @@ actor InputActor is (InputListener & _HitTestRequester)
     end
     try _focus_list(_focus_index)?.receive_focus() end
 
-  fun _find_widget(widget: WidgetBase tag): USize ? =>
+  fun _find_in_focus_list(widget: Widget tag): USize ? =>
     for i in Range[USize](0, _focus_list.size()) do
       try
         if _focus_list(i)? is widget then return i end

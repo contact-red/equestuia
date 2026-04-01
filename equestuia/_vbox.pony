@@ -1,6 +1,6 @@
 use "collections"
 
-actor VBox is (WidgetParent & Resizable)
+actor VBox is (Widget & WidgetParent)
   """
   Vertical box container. Packs children top-to-bottom using
   GTK2-style expand/fill/padding semantics.
@@ -11,68 +11,19 @@ actor VBox is (WidgetParent & Resizable)
   let _children: Array[(Any tag, SizeHint, PackOption)]
   let _grids: Array[(Any tag, Grid)]
 
-  new create(parent: WidgetParent tag, width: USize, height: USize) =>
-    _parent = parent
-    _width = width
-    _height = height
+  new create(p: WidgetParent tag, w: USize, h: USize) =>
+    _parent = p
+    _width = w
+    _height = h
     _children = Array[(Any tag, SizeHint, PackOption)]
     _grids = Array[(Any tag, Grid)]
 
-  be add_child(widget: Any tag, hint: SizeHint, option: PackOption) =>
-    """
-    Add a child widget with its size hint and pack option.
-    """
-    _children.push((widget, hint, option))
-    _grids.push((widget, Grid.filled(hint.preferred_width, hint.preferred_height, Cell.empty())))
-    _repack()
+  // -- Widget required helpers --
 
-  be receive_grid(widget: Any tag, grid: Grid) =>
+  fun ref render(): Grid =>
     """
-    Receive an updated grid from a child and recompose.
+    Compose all child grids into a single grid using packer allocations.
     """
-    for i in Range(0, _grids.size()) do
-      try
-        (let w, _) = _grids(i)?
-        if w is widget then
-          _grids(i)? = (w, grid)
-          _compose_and_send()
-          return
-        end
-      end
-    end
-
-  be resize(width: USize, height: USize) =>
-    """
-    Update container size and repack all children.
-    """
-    _width = width
-    _height = height
-    _repack()
-
-  fun ref _hints_and_opts(): Array[(SizeHint, PackOption)] val =>
-    let n = _children.size()
-    let arr: Array[(SizeHint, PackOption)] iso =
-      recover iso Array[(SizeHint, PackOption)](n) end
-    for child in _children.values() do
-      (_, let hint, let opt) = child
-      arr.push((hint, opt))
-    end
-    consume arr
-
-  fun ref _repack() =>
-    let hints_and_opts = _hints_and_opts()
-    let allocs = Packer.pack(Vertical, _width, _height, hints_and_opts)
-    for i in Range(0, _children.size().min(allocs.size())) do
-      try
-        (let w, _, _) = _children(i)?
-        let alloc = allocs(i)?
-        match w
-        | let r: Resizable tag => r.resize(alloc.width, alloc.height)
-        end
-      end
-    end
-
-  fun ref _compose_and_send() =>
     let allocs = Packer.pack(Vertical, _width, _height, _hints_and_opts())
 
     let combined: Array[Cell] iso =
@@ -105,5 +56,67 @@ actor VBox is (WidgetParent & Resizable)
     end
 
     let cells_val: Array[Cell] val = consume combined
-    let combined_grid = Grid._from(_width, _height, cells_val)
-    _parent.receive_grid(this, combined_grid)
+    Grid._from(_width, _height, cells_val)
+
+  fun ref parent(): WidgetParent tag => _parent
+  fun ref width(): USize => _width
+  fun ref height(): USize => _height
+  fun ref set_size(w: USize, h: USize) => _width = w; _height = h
+
+  // -- Override resize to repack children --
+
+  be resize(w: USize, h: USize) =>
+    """
+    Update container size, repack children, and re-render.
+    """
+    set_size(w, h)
+    _repack()
+
+  // -- WidgetParent --
+
+  be receive_grid(widget: Any tag, grid: Grid) =>
+    """
+    Receive an updated grid from a child and recompose.
+    """
+    for i in Range(0, _grids.size()) do
+      try
+        (let w, _) = _grids(i)?
+        if w is widget then
+          _grids(i)? = (w, grid)
+          render_and_send()
+          return
+        end
+      end
+    end
+
+  // -- Container-specific --
+
+  be add_child(widget: Widget tag, hint: SizeHint, option: PackOption) =>
+    """
+    Add a child widget with its size hint and pack option.
+    """
+    _children.push((widget, hint, option))
+    _grids.push((widget, Grid.filled(hint.preferred_width, hint.preferred_height, Cell.empty())))
+    _repack()
+
+  fun ref _hints_and_opts(): Array[(SizeHint, PackOption)] val =>
+    let n = _children.size()
+    let arr: Array[(SizeHint, PackOption)] iso =
+      recover iso Array[(SizeHint, PackOption)](n) end
+    for child in _children.values() do
+      (_, let hint, let opt) = child
+      arr.push((hint, opt))
+    end
+    consume arr
+
+  fun ref _repack() =>
+    let allocs = Packer.pack(Vertical, _width, _height, _hints_and_opts())
+    for i in Range(0, _children.size().min(allocs.size())) do
+      try
+        (let w, _, _) = _children(i)?
+        let alloc = allocs(i)?
+        match w
+        | let r: Widget tag => r.resize(alloc.width, alloc.height)
+        end
+      end
+    end
