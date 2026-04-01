@@ -70,15 +70,15 @@ type MouseButton is (LeftButton | MiddleButton | RightButton | NoButton)
 class val MouseEvent
   let action: MouseAction
   let button: MouseButton
-  let col: U16
-  let row: U16
+  let col: USize
+  let row: USize
   let modifiers: U8
 
   new val create(
     action': MouseAction,
     button': MouseButton,
-    col': U16,
-    row': U16,
+    col': USize,
+    row': USize,
     modifiers': U8 = 0)
   =>
     action = action'
@@ -88,10 +88,10 @@ class val MouseEvent
     modifiers = modifiers'
 
 class val ResizeEvent
-  let width: U16
-  let height: U16
+  let width: USize
+  let height: USize
 
-  new val create(width': U16, height': U16) =>
+  new val create(width': USize, height': USize) =>
     width = width'
     height = height'
 

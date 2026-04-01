@@ -7,6 +7,7 @@ actor InputActor is (_InputListener & _HitTestRequester)
   var _parser: InputParser ref
   let _compositor: Compositor tag
   let _focus_list: Array[WidgetBase tag]
+  let _resize_list: Array[_Resizable tag]
   var _focus_index: USize = 0
   var _pending_mouse: (MouseEvent | None) = None
 
@@ -14,14 +15,19 @@ actor InputActor is (_InputListener & _HitTestRequester)
     _parser = InputParser
     _compositor = compositor
     _focus_list = Array[WidgetBase tag]
+    _resize_list = Array[_Resizable tag]
     input.subscribe(this)
 
   be register_focusable(widget: WidgetBase tag) =>
     _focus_list.push(widget)
+    _resize_list.push(widget)
     // First registered widget gets focus
     if _focus_list.size() == 1 then
       widget.receive_focus()
     end
+
+  be register_resizable(widget: _Resizable tag) =>
+    _resize_list.push(widget)
 
   be unregister_focusable(widget: WidgetBase tag) =>
     try
@@ -62,13 +68,13 @@ actor InputActor is (_InputListener & _HitTestRequester)
 
   fun ref _route_mouse(me: MouseEvent) =>
     _pending_mouse = me
-    _compositor.hit_test(me.col.usize(), me.row.usize(), this)
+    _compositor.hit_test(me.col, me.row, this)
 
   fun ref _route_resize(re: ResizeEvent) =>
-    for widget in _focus_list.values() do
-      widget.resize(re.width.usize(), re.height.usize())
+    for widget in _resize_list.values() do
+      widget.resize(re.width, re.height)
     end
-    _compositor.screen_resize(re.width.usize(), re.height.usize())
+    _compositor.screen_resize(re.width, re.height)
 
   fun ref _focus_next() =>
     if _focus_list.size() == 0 then return end

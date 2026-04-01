@@ -42,11 +42,16 @@ actor WidgetBase is _Resizable
     width: USize,
     height: USize)
   =>
+    """
+    Create the widget. The widget does not render immediately on construction.
+    The expected flow is: create widget, register with Compositor via
+    `compositor.register(widget, viewport)`, then call `widget.trigger_render()`
+    to produce the first frame.
+    """
     _parent = parent
     _renderer = consume renderer
     _width = width
     _height = height
-    _render_and_send()
 
   be resize(width: USize, height: USize) =>
     _width = width
