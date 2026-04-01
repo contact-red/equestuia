@@ -6,4 +6,9 @@ actor \nodoc\ Main is TestList
     PonyTest(env, this)
 
   fun tag tests(test: PonyTest) =>
-    None
+    test(_TestCellCreate)
+    test(_TestCellDefaults)
+    test(_TestCellEq)
+    test(_TestCellAttrs)
+    test(_TestCellWideContinuation)
+    test(Property1UnitTest[CellTuple](_PropCellRoundtripEq))
