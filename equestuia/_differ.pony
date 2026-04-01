@@ -1,6 +1,9 @@
 use "collections"
 
 primitive Differ
+  """
+  Cell-by-cell frame differencing.
+  """
   fun diff(prev: Grid, curr: Grid): Array[(USize, USize, Cell)] val =>
     """
     Compare two grids cell-by-cell and return (col, row, Cell) for each

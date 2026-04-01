@@ -1,13 +1,37 @@
 primitive CellAttrs
-  """Bitfield constants for cell text attributes."""
-  fun bold(): U8      => 0x01
-  fun dim(): U8       => 0x02
-  fun underline(): U8 => 0x04
-  fun blink(): U8     => 0x08
-  fun reverse(): U8   => 0x10
+  """
+  Bitfield constants for cell text attributes.
+  """
+  fun bold(): U8 =>
+    """
+    Bold attribute bit.
+    """
+    0x01
+  fun dim(): U8 =>
+    """
+    Dim attribute bit.
+    """
+    0x02
+  fun underline(): U8 =>
+    """
+    Underline attribute bit.
+    """
+    0x04
+  fun blink(): U8 =>
+    """
+    Blink attribute bit.
+    """
+    0x08
+  fun reverse(): U8 =>
+    """
+    Reverse video attribute bit.
+    """
+    0x10
 
 class val Cell is Equatable[Cell]
-  """A single styled terminal character."""
+  """
+  A single styled terminal character.
+  """
   let char: U32
   let width: U8
   let fg: Color
@@ -21,6 +45,9 @@ class val Cell is Equatable[Cell]
     bg': Color,
     attrs': U8)
   =>
+    """
+    Create a cell with explicit character, width, colors, and attributes.
+    """
     char = char'
     width = width'
     fg = fg'
@@ -28,7 +55,9 @@ class val Cell is Equatable[Cell]
     attrs = attrs'
 
   new val empty() =>
-    """A blank cell: space character, normal width, default colors, no attrs."""
+    """
+    A blank cell: space character, normal width, default colors, no attrs.
+    """
     char = ' '
     width = 1
     fg = Default
@@ -47,6 +76,9 @@ class val Cell is Equatable[Cell]
     attrs = 0
 
   fun eq(that: box->Cell): Bool =>
+    """
+    Two cells are equal when all fields match.
+    """
     (char == that.char)
       and (width == that.width)
       and (_color_eq(fg, that.fg))
@@ -54,6 +86,9 @@ class val Cell is Equatable[Cell]
       and (attrs == that.attrs)
 
   fun ne(that: box->Cell): Bool =>
+    """
+    Negation of eq.
+    """
     not eq(that)
 
   fun tag _color_eq(a: Color, b: Color): Bool =>

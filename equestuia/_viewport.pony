@@ -1,5 +1,7 @@
 class val ViewPort
-  """A widget's declaration of screen position, size, and layer."""
+  """
+  A widget's declaration of screen position, size, and layer.
+  """
   let anchor: Anchor
   let width: USize
   let height: USize
@@ -15,6 +17,9 @@ class val ViewPort
     offset_y': ISize = 0,
     z_order': I32 = 0)
   =>
+    """
+    Create a viewport with anchor, dimensions, optional offset, and z-order.
+    """
     anchor = anchor'
     width = width'
     height = height'

@@ -1,5 +1,7 @@
 class val PackOption
-  """Per-child packing configuration within a box container (GTK2-style)."""
+  """
+  Per-child packing configuration within a box container (GTK2-style).
+  """
   let from_end: Bool
   let expand: Bool
   let fill: Bool
@@ -11,6 +13,9 @@ class val PackOption
     fill': Bool = false,
     padding': USize = 0)
   =>
+    """
+    Create a pack option. All fields default to false/zero.
+    """
     from_end = from_end'
     expand = expand'
     fill = fill'

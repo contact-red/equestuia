@@ -1,14 +1,17 @@
 use "collections"
 
-actor VBox is (_WidgetParent & _Resizable)
-  """Vertical box container. Packs children top-to-bottom."""
-  let _parent: _WidgetParent tag
+actor VBox is (WidgetParent & Resizable)
+  """
+  Vertical box container. Packs children top-to-bottom using
+  GTK2-style expand/fill/padding semantics.
+  """
+  let _parent: WidgetParent tag
   var _width: USize
   var _height: USize
   let _children: Array[(Any tag, SizeHint, PackOption)]
   let _grids: Array[(Any tag, Grid)]
 
-  new create(parent: _WidgetParent tag, width: USize, height: USize) =>
+  new create(parent: WidgetParent tag, width: USize, height: USize) =>
     _parent = parent
     _width = width
     _height = height
@@ -16,11 +19,17 @@ actor VBox is (_WidgetParent & _Resizable)
     _grids = Array[(Any tag, Grid)]
 
   be add_child(widget: Any tag, hint: SizeHint, option: PackOption) =>
+    """
+    Add a child widget with its size hint and pack option.
+    """
     _children.push((widget, hint, option))
     _grids.push((widget, Grid.filled(hint.preferred_width, hint.preferred_height, Cell.empty())))
     _repack()
 
   be receive_grid(widget: Any tag, grid: Grid) =>
+    """
+    Receive an updated grid from a child and recompose.
+    """
     for i in Range(0, _grids.size()) do
       try
         (let w, _) = _grids(i)?
@@ -33,6 +42,9 @@ actor VBox is (_WidgetParent & _Resizable)
     end
 
   be resize(width: USize, height: USize) =>
+    """
+    Update container size and repack all children.
+    """
     _width = width
     _height = height
     _repack()
@@ -55,7 +67,7 @@ actor VBox is (_WidgetParent & _Resizable)
         (let w, _, _) = _children(i)?
         let alloc = allocs(i)?
         match w
-        | let r: _Resizable tag => r.resize(alloc.width, alloc.height)
+        | let r: Resizable tag => r.resize(alloc.width, alloc.height)
         end
       end
     end

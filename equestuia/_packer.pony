@@ -1,22 +1,38 @@
 use "collections"
 
 primitive Horizontal
+  """
+  Pack children along the horizontal axis (left-to-right).
+  """
 primitive Vertical
+  """
+  Pack children along the vertical axis (top-to-bottom).
+  """
 type PackAxis is (Horizontal | Vertical)
 
 class val Allocation
+  """
+  Result of packing: a child's position and size within the container.
+  """
   let x: USize
   let y: USize
   let width: USize
   let height: USize
 
   new val create(x': USize, y': USize, width': USize, height': USize) =>
+    """
+    Create an allocation with absolute position and size.
+    """
     x = x'
     y = y'
     width = width'
     height = height'
 
 primitive Packer
+  """
+  GTK2-style box packing algorithm. Computes child allocations given
+  container dimensions, packing axis, and children's size hints + pack options.
+  """
   fun pack(
     axis: PackAxis,
     container_w: USize,
@@ -24,6 +40,10 @@ primitive Packer
     children: Array[(SizeHint, PackOption)] val)
     : Array[Allocation] val
   =>
+    """
+    Compute child allocations within a container. Handles pack_start/pack_end,
+    expand/fill, padding, and overflow truncation.
+    """
     let container_main = match axis
     | Horizontal => container_w
     | Vertical => container_h

@@ -1,13 +1,13 @@
 use "collections"
 
-actor InputActor is (_InputListener & _HitTestRequester)
+actor InputActor is (InputListener & _HitTestRequester)
   """
   Reads terminal input, parses events, routes to focused widget.
   """
   var _parser: InputParser ref
   let _compositor: Compositor tag
   let _focus_list: Array[WidgetBase tag]
-  let _resize_list: Array[_Resizable tag]
+  let _resize_list: Array[Resizable tag]
   var _focus_index: USize = 0
   var _pending_mouse: (MouseEvent | None) = None
 
@@ -15,10 +15,14 @@ actor InputActor is (_InputListener & _HitTestRequester)
     _parser = InputParser
     _compositor = compositor
     _focus_list = Array[WidgetBase tag]
-    _resize_list = Array[_Resizable tag]
+    _resize_list = Array[Resizable tag]
     input.subscribe(this)
 
   be register_focusable(widget: WidgetBase tag) =>
+    """
+    Add a widget to the focus list. The first registered widget receives
+    focus automatically. Also registers for resize notifications.
+    """
     _focus_list.push(widget)
     _resize_list.push(widget)
     // First registered widget gets focus
@@ -26,10 +30,16 @@ actor InputActor is (_InputListener & _HitTestRequester)
       widget.receive_focus()
     end
 
-  be register_resizable(widget: _Resizable tag) =>
+  be register_resizable(widget: Resizable tag) =>
+    """
+    Register a widget for resize notifications without adding to focus list.
+    """
     _resize_list.push(widget)
 
   be unregister_focusable(widget: WidgetBase tag) =>
+    """
+    Remove a widget from the focus list and adjust the focus index.
+    """
     try
       let idx = _find_widget(widget)?
       _focus_list.delete(idx)?
@@ -43,6 +53,9 @@ actor InputActor is (_InputListener & _HitTestRequester)
     end
 
   be receive(data: Array[U8] val) =>
+    """
+    Called by TerminalInput when raw bytes arrive. Parses and routes events.
+    """
     let events = _parser.parse(data)
     for event in events.values() do
       match event
@@ -53,8 +66,9 @@ actor InputActor is (_InputListener & _HitTestRequester)
     end
 
   be hit_test_result(widget: (Any tag | None)) =>
-    // Callback from compositor for mouse routing.
-    // Mouse support is placeholder for now: just clear pending.
+    """
+    Callback from compositor hit_test. Mouse routing is not yet implemented.
+    """
     _pending_mouse = None
 
   fun ref _route_key(ke: KeyEvent) =>

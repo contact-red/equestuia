@@ -3,7 +3,7 @@ use "collections"
 trait tag _HitTestRequester
   be hit_test_result(widget: (Any tag | None))
 
-actor Compositor is _WidgetParent
+actor Compositor is WidgetParent
   """
   Receives grids from widget-actors, composites by z-order,
   diffs against previous frame, and writes ANSI output.
@@ -32,10 +32,17 @@ actor Compositor is _WidgetParent
     _output.write(consume init)
 
   be register(widget: Any tag, viewport: ViewPort) =>
+    """
+    Register a widget with its viewport. The widget will be composited
+    into the frame at the viewport's position and z-order.
+    """
     _widgets.push((widget, viewport, Grid.filled(viewport.width, viewport.height, Cell.empty())))
     _compose_and_render()
 
   be unregister(widget: Any tag) =>
+    """
+    Remove a widget from the compositor.
+    """
     try
       let idx = _find_widget(widget)?
       _widgets.delete(idx)?
@@ -43,6 +50,9 @@ actor Compositor is _WidgetParent
     end
 
   be update_viewport(widget: Any tag, viewport: ViewPort) =>
+    """
+    Update a widget's viewport (position, size, z-order) and recompose.
+    """
     try
       let idx = _find_widget(widget)?
       (let w, _, let g) = _widgets(idx)?
@@ -51,6 +61,9 @@ actor Compositor is _WidgetParent
     end
 
   be receive_grid(widget: Any tag, grid: Grid) =>
+    """
+    Receive an updated grid from a widget and recompose the frame.
+    """
     try
       let idx = _find_widget(widget)?
       (let w, let vp, _) = _widgets(idx)?
@@ -59,6 +72,10 @@ actor Compositor is _WidgetParent
     end
 
   be hit_test(col: USize, row: USize, requester: _HitTestRequester tag) =>
+    """
+    Find the topmost widget at the given screen coordinate and send the
+    result back to the requester.
+    """
     // Walk widgets in reverse z-order (highest first) to find topmost
     let sorted = _sorted_indices()
     var i = sorted.size()
@@ -79,6 +96,9 @@ actor Compositor is _WidgetParent
     requester.hit_test_result(None)
 
   be screen_resize(width: USize, height: USize) =>
+    """
+    Handle terminal resize: update dimensions, clear screen, and recompose.
+    """
     _screen_width = width
     _screen_height = height
     _prev_frame = Grid.filled(width, height, Cell.empty())

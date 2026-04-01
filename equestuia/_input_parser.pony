@@ -1,5 +1,11 @@
 primitive IncompleteSequence
+  """
+  An escape sequence was started but not finished.
+  """
 primitive UnrecognizedSequence
+  """
+  An escape sequence was not recognized.
+  """
 
 type InputParseError is (IncompleteSequence | UnrecognizedSequence)
 
@@ -19,6 +25,10 @@ type _ParseState is
   | _Utf8Two | _Utf8Three | _Utf8Four )
 
 class ref InputParser
+  """
+  Stateful parser that converts raw terminal bytes into InputEvent values.
+  Handles UTF-8, CSI sequences, SS3 sequences, and control characters.
+  """
   var _state: _ParseState = _Ground
   // Accumulated CSI/SS3 parameter digits
   var _param: U32 = 0
@@ -30,6 +40,11 @@ class ref InputParser
   var _out: Array[InputEvent] iso = recover iso Array[InputEvent] end
 
   fun ref parse(data: Array[U8] val): Array[InputEvent] val =>
+    """
+    Parse raw bytes into input events. If the data ends mid-escape-sequence,
+    the parser retains state for the next call. A standalone ESC byte at the
+    end of data is emitted as an Escape key event.
+    """
     _out = recover iso Array[InputEvent] end
     for byte in data.values() do
       _process(byte)

@@ -1,7 +1,13 @@
 use "collections"
 
 primitive GridCellOutOfBounds
+  """
+  Returned when a cell access is outside the grid bounds.
+  """
 primitive GridDimensionMismatch
+  """
+  Returned when cell array size does not match width * height.
+  """
 
 type GridError is (GridCellOutOfBounds | GridDimensionMismatch)
 
@@ -20,7 +26,9 @@ class val Grid
     _cells = cells'
 
   new val filled(width': USize, height': USize, fill: Cell) =>
-    """Create a grid where every cell is `fill`."""
+    """
+    Create a grid where every cell is `fill`.
+    """
     width = width'
     height = height'
     _cells = recover val
@@ -33,7 +41,9 @@ class val Grid
     end
 
   fun apply(col: USize, row: USize): (Cell | GridCellOutOfBounds) =>
-    """Look up a cell by (col, row). Returns error if out of bounds."""
+    """
+    Look up a cell by (col, row). Returns GridCellOutOfBounds if out of range.
+    """
     if (col >= width) or (row >= height) then
       GridCellOutOfBounds
     else
@@ -46,10 +56,15 @@ class val Grid
     end
 
 primitive GridFactory
-  """Validated constructor for Grid. Returns GridDimensionMismatch if cells.size() != width * height."""
+  """
+  Validated constructor for Grid.
+  """
   fun apply(width: USize, height: USize, cells: Array[Cell] val)
     : (Grid | GridDimensionMismatch)
   =>
+    """
+    Return a Grid if cells.size() == width * height, else GridDimensionMismatch.
+    """
     if cells.size() != (width * height) then
       GridDimensionMismatch
     else

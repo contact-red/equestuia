@@ -1,6 +1,11 @@
 primitive AnsiEncoder
+  """
+  Stateless ANSI escape sequence encoder.
+  """
   fun move_to(col: USize, row: USize): Array[U8] val =>
-    """Emit ESC[(row+1);(col+1)H — terminal coordinates are 1-indexed."""
+    """
+    Emit ESC[(row+1);(col+1)H — terminal coordinates are 1-indexed.
+    """
     recover val
       let buf = Array[U8]
       buf.push(0x1B); buf.push('[')
@@ -12,7 +17,9 @@ primitive AnsiEncoder
     end
 
   fun set_fg(color: Color): Array[U8] val =>
-    """Emit ESC[{fg_code}m."""
+    """
+    Emit ESC[{fg_code}m for the given color.
+    """
     let code =
       match color
       | let c: _Colorable => c.fg_code()
@@ -20,7 +27,9 @@ primitive AnsiEncoder
     _sgr(code.usize())
 
   fun set_bg(color: Color): Array[U8] val =>
-    """Emit ESC[{bg_code}m."""
+    """
+    Emit ESC[{bg_code}m for the given color.
+    """
     let code =
       match color
       | let c: _Colorable => c.bg_code()
@@ -29,8 +38,8 @@ primitive AnsiEncoder
 
   fun set_attrs(attrs: U8): Array[U8] val =>
     """
-    Emit an SGR sequence for each set bit.
-    bold=1, dim=2, underline=4, blink=5, reverse=7
+    Emit an SGR sequence for each set attribute bit.
+    Bold=1, dim=2, underline=4, blink=5, reverse=7.
     """
     recover val
       let buf = Array[U8]
@@ -53,11 +62,15 @@ primitive AnsiEncoder
     end
 
   fun reset(): Array[U8] val =>
-    """Emit ESC[0m."""
+    """
+    Emit ESC[0m to reset all attributes and colors.
+    """
     _sgr(0)
 
   fun write_char(codepoint: U32): Array[U8] val =>
-    """Encode a Unicode codepoint as UTF-8 bytes."""
+    """
+    Encode a Unicode codepoint as UTF-8 bytes.
+    """
     recover val
       let buf = Array[U8]
       if codepoint <= 0x7F then
@@ -79,25 +92,33 @@ primitive AnsiEncoder
     end
 
   fun hide_cursor(): Array[U8] val =>
-    """Emit ESC[?25l."""
+    """
+    Emit ESC[?25l to hide the cursor.
+    """
     recover val
       [as U8: 0x1B; '['; '?'; '2'; '5'; 'l']
     end
 
   fun show_cursor(): Array[U8] val =>
-    """Emit ESC[?25h."""
+    """
+    Emit ESC[?25h to show the cursor.
+    """
     recover val
       [as U8: 0x1B; '['; '?'; '2'; '5'; 'h']
     end
 
   fun clear_screen(): Array[U8] val =>
-    """Emit ESC[2J."""
+    """
+    Emit ESC[2J to clear the entire screen.
+    """
     recover val
       [as U8: 0x1B; '['; '2'; 'J']
     end
 
   fun tag _sgr(code: USize): Array[U8] val =>
-    """Build ESC[{code}m."""
+    """
+    Build ESC[{code}m.
+    """
     recover val
       let buf = Array[U8]
       buf.push(0x1B); buf.push('[')
@@ -107,7 +128,9 @@ primitive AnsiEncoder
     end
 
   fun tag _push_usize(buf: Array[U8], n: USize) =>
-    """Append the decimal ASCII representation of n to buf."""
+    """
+    Append the decimal ASCII representation of n to buf.
+    """
     if n >= 10 then
       _push_usize(buf, n / 10)
     end
