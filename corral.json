@@ -1,0 +1,10 @@
+{
+  "packages": ["equestuia"],
+  "deps": [],
+  "info": {
+    "name": "equestuia",
+    "description": "Intermediate-mode TUI library for Pony",
+    "version": "0.1.0",
+    "license": "BSD-2-Clause"
+  }
+}
