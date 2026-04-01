@@ -1,8 +1,23 @@
 use "collections"
+use "signals"
+
+class _WinchNotify is SignalNotify
+  """
+  Signal handler that notifies the InputActor on SIGWINCH.
+  """
+  let _input: InputActor tag
+
+  new create(input: InputActor tag) =>
+    _input = input
+
+  fun apply(times: U32): Bool =>
+    _input._winch()
+    true
 
 actor InputActor is (InputListener & _HitTestRequester)
   """
   Reads terminal input, parses events, routes to focused widget.
+  Listens for SIGWINCH to detect terminal resize.
   """
   var _parser: InputParser ref
   let _compositor: Compositor tag
@@ -17,6 +32,17 @@ actor InputActor is (InputListener & _HitTestRequester)
     _focus_list = Array[WidgetBase tag]
     _resize_list = Array[Resizable tag]
     input.subscribe(this)
+    ifdef not windows then
+      SignalHandler(recover _WinchNotify(this) end, Sig.winch())
+    end
+
+  be _winch() =>
+    """
+    Called when SIGWINCH is received. Queries the new terminal size and
+    routes it as a resize event.
+    """
+    (let w, let h) = TermSize()
+    _route_resize(ResizeEvent(w, h))
 
   be register_focusable(widget: WidgetBase tag) =>
     """
@@ -24,7 +50,6 @@ actor InputActor is (InputListener & _HitTestRequester)
     focus automatically. Also registers for resize notifications.
     """
     _focus_list.push(widget)
-    _resize_list.push(widget)
     // First registered widget gets focus
     if _focus_list.size() == 1 then
       widget.receive_focus()
