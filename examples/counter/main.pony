@@ -111,10 +111,25 @@ actor Main
     let compositor = Compositor(output, term_w, term_h)
     let input_actor = InputActor(input, compositor)
 
-    let counter = Counter(compositor, 20, 7, env, input)
+    // VBox fills the full terminal
+    let vbox = VBox(compositor, term_w, term_h)
+    let viewport = ViewPort(NorthWest, term_w, term_h)
+    compositor.register(vbox, viewport)
+    input_actor.register_widget(vbox)
 
-    let viewport = ViewPort(Center, 20, 7)
-    compositor.register(counter, viewport)
+    // Top label
+    let top_label = Label(vbox, term_w, 1, "Top of VBox", Green)
+    vbox.add_child(top_label, SizeHint(term_w, 1), PackOption)
+    top_label.trigger_render()
+
+    // Counter in the middle, expands to fill
+    let counter = Counter(vbox, term_w, 7, env, input)
+    vbox.add_child(counter, SizeHint(term_w, 7), PackOption(where expand' = true, fill' = true))
     input_actor.register_focusable(counter)
     counter.trigger_render()
+
+    // Bottom label
+    let bottom_label = Label(vbox, term_w, 1, "Bottom of VBox", Red)
+    vbox.add_child(bottom_label, SizeHint(term_w, 1), PackOption(where from_end' = true))
+    bottom_label.trigger_render()
 

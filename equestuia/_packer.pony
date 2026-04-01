@@ -163,8 +163,8 @@ primitive Packer
         end
 
         let cross_size = match axis
-        | Horizontal => hint.preferred_height
-        | Vertical => hint.preferred_width
+        | Horizontal => container_h
+        | Vertical => container_w
         end
 
         let alloc = match axis
@@ -207,8 +207,8 @@ primitive Packer
         let main_pos = end_cursor
 
         let cross_size = match axis
-        | Horizontal => hint.preferred_height
-        | Vertical => hint.preferred_width
+        | Horizontal => container_h
+        | Vertical => container_w
         end
 
         let alloc = match axis

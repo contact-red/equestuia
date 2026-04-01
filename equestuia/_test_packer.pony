@@ -17,7 +17,7 @@ class \nodoc\ iso _TestPackerSingleChild is UnitTest
       h.assert_eq[USize](0, alloc.x)
       h.assert_eq[USize](0, alloc.y)
       h.assert_eq[USize](10, alloc.width)
-      h.assert_eq[USize](5, alloc.height)
+      h.assert_eq[USize](24, alloc.height) // cross-axis fills container
     else
       h.fail("index error")
     end
