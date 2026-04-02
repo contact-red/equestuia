@@ -6,11 +6,11 @@ actor HBox is CompositeWidget
   GTK2-style expand/fill/padding semantics.
   """
   let _state: WidgetState
-  let _children: Array[(Any tag, USize, USize, PackOption)]
+  let _children: Array[(Any tag, USize, USize, PackOption, Bool)]
 
   new create(p: WidgetParent tag) =>
     _state = WidgetState(p)
-    _children = Array[(Any tag, USize, USize, PackOption)]
+    _children = Array[(Any tag, USize, USize, PackOption, Bool)]
 
   // -- Widget + CompositeWidget required helpers --
 
@@ -73,20 +73,27 @@ actor HBox is CompositeWidget
 
   // -- Container-specific --
 
-  be add_child(widget: Widget tag, w: USize, h: USize, option: PackOption = PackOption) =>
+  be pack_start(widget: Widget tag, w: USize, h: USize, option: PackOption = PackOption) =>
     """
-    Add a child widget with its preferred size and pack option.
+    Pack a child from the start (left for HBox).
     """
-    _children.push((widget, w, h, option))
+    _children.push((widget, w, h, option, false))
     _state.child_grids.push((widget, Grid.filled(w, h, Cell.empty())))
 
-  fun ref _pack_params(): Array[(USize, USize, PackOption)] val =>
+  be pack_end(widget: Widget tag, w: USize, h: USize, option: PackOption = PackOption) =>
+    """
+    Pack a child from the end (right for HBox).
+    """
+    _children.push((widget, w, h, option, true))
+    _state.child_grids.push((widget, Grid.filled(w, h, Cell.empty())))
+
+  fun ref _pack_params(): Array[(USize, USize, PackOption, Bool)] val =>
     let n = _children.size()
-    let arr: Array[(USize, USize, PackOption)] iso =
-      recover iso Array[(USize, USize, PackOption)](n) end
+    let arr: Array[(USize, USize, PackOption, Bool)] iso =
+      recover iso Array[(USize, USize, PackOption, Bool)](n) end
     for child in _children.values() do
-      (_, let pw, let ph, let opt) = child
-      arr.push((pw, ph, opt))
+      (_, let pw, let ph, let opt, let fe) = child
+      arr.push((pw, ph, opt, fe))
     end
     consume arr
 
@@ -95,7 +102,7 @@ actor HBox is CompositeWidget
 
     for i in Range(0, _children.size().min(allocs.size())) do
       try
-        (let w, _, _, _) = _children(i)?
+        (let w, _, _, _, _) = _children(i)?
         let alloc = allocs(i)?
         match w
         | let r: Widget tag => r.resize(alloc.width, alloc.height)

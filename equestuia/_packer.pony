@@ -42,7 +42,7 @@ primitive Packer
     axis: PackAxis,
     container_w: USize,
     container_h: USize,
-    children: Array[(USize, USize, PackOption)] val)
+    children: Array[(USize, USize, PackOption, Bool)] val)
     : Array[Allocation] val
   =>
     """
@@ -59,8 +59,8 @@ primitive Packer
     let end_indices = Array[USize]
     for ci in Range(0, children.size()) do
       try
-        (_, _, let opt) = children(ci)?
-        if opt.from_end then
+        (_, _, _, let from_end) = children(ci)?
+        if from_end then
           end_indices.push(ci)
         else
           start_indices.push(ci)
@@ -76,7 +76,7 @@ primitive Packer
     var fixed_preferred: USize = 0
     for ti in Range(0, children.size()) do
       try
-        (let pw, let ph, let opt) = children(ti)?
+        (let pw, let ph, let opt, _) = children(ti)?
         let pref = match axis
         | Horizontal => pw
         | Vertical => ph
@@ -119,7 +119,7 @@ primitive Packer
     var cursor: USize = 0
     for i in start_indices.values() do
       try
-        (let pw, let ph, let opt) = children(i)?
+        (let pw, let ph, let opt, _) = children(i)?
         let pref = match axis
         | Horizontal => pw
         | Vertical => ph
@@ -195,7 +195,7 @@ primitive Packer
     var end_total_padding: USize = 0
     for i in end_indices.values() do
       try
-        (let pw, let ph, let opt) = children(i)?
+        (let pw, let ph, let opt, _) = children(i)?
         let pref = match axis
         | Horizontal => pw
         | Vertical => ph
@@ -222,7 +222,7 @@ primitive Packer
 
     for i in end_indices.values() do
       try
-        (let pw, let ph, let opt) = children(i)?
+        (let pw, let ph, let opt, _) = children(i)?
         let pref = match axis
         | Horizontal => pw
         | Vertical => ph

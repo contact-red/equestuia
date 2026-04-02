@@ -30,18 +30,18 @@ actor Main
 
     // Top label
     let top_label = Label(vbox, "Keyboard Tester!", BrightGreen)
-    vbox.add_child(top_label, term_w, 1)
+    vbox.pack_start(top_label, term_w, 1)
 
     // Frame around the keyboard
     let hbox: HBox = HBox(vbox)
 //    let b0: Label = Label(hbox,0,0,"")
 //    let b1: Label = Label(hbox,0,0,"")
 //    vbox.add_child(b0, SizeHint(1,1), PackOption(where expand' = true, fill' = true))
-    vbox.add_child(hbox, 100, 20)
+    vbox.pack_start(hbox, 100, 20)
 //    vbox.add_child(b1, SizeHint(1,1), PackOption(where expand' = true, fill' = true))
 
     let keyb: Keyboard = Keyboard(hbox, input)
-    hbox.add_child(keyb, 100, 20)
+    hbox.pack_start(keyb, 100, 20)
     input_actor.register_focusable(keyb)
 
     // Kick off the layout cascade — must be after all children are added
@@ -135,11 +135,11 @@ actor Keyboard is CompositeWidget
       let l: Label = Label(f, r)
       mapping.insert(r, l)
       f.set_child(l)
-      row1.add_child(f, r.size()+2, 3)
+      row1.pack_start(f, r.size()+2, 3)
     end
 //    let b1: Label = Label(row1, 0, 0, "")
 //    row1.add_child(b1, SizeHint(0, 0), PackOption(where expand' = true,  fill' = true))
-    rows.add_child(row1, 100, 3)
+    rows.pack_start(row1, 100, 3)
 
   // -- Widget + CompositeWidget required helpers --
 

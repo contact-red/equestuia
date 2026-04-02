@@ -113,18 +113,18 @@ actor Main
 
     // Top label
     let top_label = Label(vbox, "Top of VBox", Green)
-    vbox.add_child(top_label, term_w, 1)
+    vbox.pack_start(top_label, term_w, 1)
 
     let hline0 = HLine(vbox)
     let hline1 = HLine(vbox)
-    vbox.add_child(hline0, term_w, 1)
+    vbox.pack_start(hline0, term_w, 1)
 
     let hbox = HBox(vbox)
-    vbox.add_child(hbox, term_w, 4, PackOption(where expand' = true, fill' = true))
+    vbox.pack_start(hbox, term_w, 4, PackOption(where expand' = true, fill' = true))
 
     // Counter Frame 0
     let frame0 = Frame(hbox, "Frame 0", Red)
-    hbox.add_child(frame0, term_w / 2, 4, PackOption(where expand' = true, fill' = true))
+    hbox.pack_start(frame0, term_w / 2, 4, PackOption(where expand' = true, fill' = true))
 
     // Counter inside the frame 0
     let counter0 = Counter(frame0, env, input)
@@ -133,7 +133,7 @@ actor Main
 
     // Counter Frame 1
     let frame1 = Frame(hbox, "Frame 1", Red)
-    hbox.add_child(frame1, term_w / 2, 4, PackOption(where expand' = true, fill' = true))
+    hbox.pack_start(frame1, term_w / 2, 4, PackOption(where expand' = true, fill' = true))
 
     // Counter inside the frame 1
     let counter1 = Counter(frame1, env, input)
@@ -141,9 +141,9 @@ actor Main
     input_actor.register_focusable(counter1)
 
     // Bottom label
-    vbox.add_child(hline1, term_w, 1)
+    vbox.pack_start(hline1, term_w, 1)
     let bottom_label = Label(vbox, "Bottom of VBox", Red)
-    vbox.add_child(bottom_label, term_w, 1, PackOption(where from_end' = true))
+    vbox.pack_end(bottom_label, term_w, 1)
 
     // Kick off the layout cascade — must be after all children are added
     vbox.resize(term_w, term_h)
