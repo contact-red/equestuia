@@ -101,45 +101,32 @@ actor Main
     let compositor = Compositor(output, term_w, term_h)
     let input_actor = InputActor(input, compositor)
 
+    let builder = UIBuilder(compositor, input_actor)
+    builder.register("counter", {(p: WidgetParent tag): Widget tag =>
+      Counter(p, env, input)
+    } val)
 
-    // VBox fills the full terminal
-    let vbox = VBox(compositor)
-    input_actor.register_widget(vbox)
-
-    // Top label
-    let top_label = Label(vbox, "Top of VBox", Green)
-    vbox.pack_start(top_label, term_w, 1)
-
-    let hline0 = HLine(vbox)
-    let hline1 = HLine(vbox)
-    vbox.pack_start(hline0, term_w, 1)
-
-    let hbox = HBox(vbox)
-    vbox.pack_start(hbox, term_w, 4, PackOption(PackFill))
-
-    // Counter Frame 0
-    let frame0 = Frame(hbox, "Frame 0", Red)
-    hbox.pack_start(frame0, term_w / 2, 4, PackOption(PackFill))
-
-    // Counter inside the frame 0
-    let counter0 = Counter(frame0, env, input)
-    frame0.set_child(counter0)
-    input_actor.register_focusable(counter0)
-
-    // Counter Frame 1
-    let frame1 = Frame(hbox, "Frame 1", Red)
-    hbox.pack_start(frame1, term_w / 2, 4, PackOption(PackFill))
-
-    // Counter inside the frame 1
-    let counter1 = Counter(frame1, env, input)
-    frame1.set_child(counter1)
-    input_actor.register_focusable(counter1)
-
-    // Bottom label
-    vbox.pack_start(hline1, term_w, 1)
-    let bottom_label = Label(vbox, "Bottom of VBox", Red)
-    vbox.pack_end(bottom_label, term_w, 1)
-
-    // Register root and kick off layout — must be after all children are added
-    compositor.set_root(vbox)
+    match builder.build(
+      "vbox\n" +
+      "  pack-start *x1\n" +
+      "    label \"Top of VBox\" fg=green\n" +
+      "  pack-start *x1\n" +
+      "    hline\n" +
+      "  pack-start *x4 fill\n" +
+      "    hbox\n" +
+      "      pack-start 0x4 fill\n" +
+      "        frame \"Frame 0\" border-color=red\n" +
+      "          counter #counter0 focusable\n" +
+      "      pack-start 0x4 fill\n" +
+      "        frame \"Frame 1\" border-color=red\n" +
+      "          counter #counter1 focusable\n" +
+      "  pack-start *x1\n" +
+      "    hline\n" +
+      "  pack-end *x1\n" +
+      "    label \"Bottom of VBox\" fg=red"
+    )
+    | let root: Widget tag => None
+    | let e: BuilderError =>
+      env.out.print("Builder error: " + e.string())
+    end
 
