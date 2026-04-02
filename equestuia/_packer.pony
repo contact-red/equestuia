@@ -32,6 +32,11 @@ primitive Packer
   """
   GTK2-style box packing algorithm. Computes child allocations given
   container dimensions, packing axis, and children's size hints + pack options.
+
+  When expanding children have more space than needed, extra is distributed
+  equally. When there is less space than needed, expanding children shrink
+  proportionally. Non-expanding children always get their preferred size
+  (truncated only if they physically exceed remaining space).
   """
   fun pack(
     axis: PackAxis,
@@ -42,12 +47,13 @@ primitive Packer
   =>
     """
     Compute child allocations within a container. Handles pack_start/pack_end,
-    expand/fill, padding, and overflow truncation.
+    expand/fill, padding, and proportional shrinking.
     """
     let container_main = match axis
     | Horizontal => container_w
     | Vertical => container_h
     end
+
     // Separate into pack_start and pack_end, preserving original indices.
     let start_indices = Array[USize]
     let end_indices = Array[USize]
@@ -66,6 +72,8 @@ primitive Packer
     var total_preferred: USize = 0
     var total_padding: USize = 0
     var expand_count: USize = 0
+    var expand_preferred: USize = 0
+    var fixed_preferred: USize = 0
     for ti in Range(0, children.size()) do
       try
         (let hint, let opt) = children(ti)?
@@ -77,27 +85,20 @@ primitive Packer
         total_padding = total_padding + opt.padding
         if opt.expand then
           expand_count = expand_count + 1
+          expand_preferred = expand_preferred + pref
+        else
+          fixed_preferred = fixed_preferred + pref
         end
       end
     end
 
-    let used = total_preferred + total_padding
-    let extra: USize = if used < container_main then
-      container_main - used
-    else
-      0
-    end
-
-    let extra_per_expand: USize = if expand_count > 0 then
-      extra / expand_count
-    else
-      0
-    end
-    let extra_remainder: USize = if expand_count > 0 then
-      extra - (extra_per_expand * expand_count)
-    else
-      0
-    end
+    // Space available after padding and fixed children.
+    let space_for_expanding: USize =
+      if container_main > (total_padding + fixed_preferred) then
+        container_main - total_padding - fixed_preferred
+      else
+        0
+      end
 
     // Build result array with placeholder allocations.
     let result = recover iso
@@ -108,16 +109,11 @@ primitive Packer
       arr
     end
 
-    // Track which expand child is the last one (gets remainder).
-    var last_expand_idx: USize = 0
-    for ei in Range(0, children.size()) do
-      try
-        (_, let opt) = children(ei)?
-        if opt.expand then
-          last_expand_idx = ei
-        end
-      end
-    end
+    // Compute effective main-axis size for each child.
+    // Expanding children share space_for_expanding proportionally.
+    // expand_remainder distributes leftover pixels to avoid rounding loss.
+    var expand_allocated: USize = 0
+    var expand_seen: USize = 0
 
     // Place pack_start children left-to-right (or top-to-bottom).
     var cursor: USize = 0
@@ -138,19 +134,31 @@ primitive Packer
         end
 
         var alloc_space: USize = pref
-        if opt.expand then
-          let bonus = if i == last_expand_idx then
-            extra_per_expand + extra_remainder
+        if opt.expand and (expand_count > 0) then
+          expand_seen = expand_seen + 1
+          if expand_seen == expand_count then
+            // Last expanding child gets whatever is left
+            alloc_space = if space_for_expanding > expand_allocated then
+              space_for_expanding - expand_allocated
+            else
+              0
+            end
           else
-            extra_per_expand
+            // Proportional share: (pref / expand_preferred) * space_for_expanding
+            alloc_space = if expand_preferred > 0 then
+              (pref * space_for_expanding) / expand_preferred
+            else
+              space_for_expanding / expand_count
+            end
+            expand_allocated = expand_allocated + alloc_space
           end
-          alloc_space = pref + bonus
         end
 
         let clamped_space = alloc_space.min(remaining)
 
         let main_pos: USize = if opt.expand and (not opt.fill) then
-          let centered_offset = (clamped_space - pref.min(clamped_space)) / 2
+          let actual_size = pref.min(clamped_space)
+          let centered_offset = (clamped_space - actual_size) / 2
           cursor + centered_offset
         else
           cursor
@@ -178,7 +186,40 @@ primitive Packer
     end
 
     // Place pack_end children right-to-left (or bottom-to-top).
+    // Reset expand tracking for pack_end group.
+    var end_expand_allocated: USize = 0
+    var end_expand_seen: USize = 0
+    var end_expand_count: USize = 0
+    var end_expand_preferred: USize = 0
+    var end_fixed_preferred: USize = 0
+    var end_total_padding: USize = 0
+    for i in end_indices.values() do
+      try
+        (let hint, let opt) = children(i)?
+        let pref = match axis
+        | Horizontal => hint.preferred_width
+        | Vertical => hint.preferred_height
+        end
+        end_total_padding = end_total_padding + opt.padding
+        if opt.expand then
+          end_expand_count = end_expand_count + 1
+          end_expand_preferred = end_expand_preferred + pref
+        else
+          end_fixed_preferred = end_fixed_preferred + pref
+        end
+      end
+    end
+
+    // Space available for pack_end expanding children is from end_cursor backward.
+    // end_cursor starts at container_main (or at cursor if pack_start used some).
     var end_cursor: USize = container_main
+    let end_space_for_expanding: USize =
+      if end_cursor > (end_total_padding + end_fixed_preferred) then
+        end_cursor - end_total_padding - end_fixed_preferred
+      else
+        0
+      end
+
     for i in end_indices.values() do
       try
         (let hint, let opt) = children(i)?
@@ -187,7 +228,25 @@ primitive Packer
         | Vertical => hint.preferred_height
         end
 
-        let alloc_space: USize = pref
+        var alloc_space: USize = pref
+        if opt.expand and (end_expand_count > 0) then
+          end_expand_seen = end_expand_seen + 1
+          if end_expand_seen == end_expand_count then
+            alloc_space = if end_space_for_expanding > end_expand_allocated then
+              end_space_for_expanding - end_expand_allocated
+            else
+              0
+            end
+          else
+            alloc_space = if end_expand_preferred > 0 then
+              (pref * end_space_for_expanding) / end_expand_preferred
+            else
+              end_space_for_expanding / end_expand_count
+            end
+            end_expand_allocated = end_expand_allocated + alloc_space
+          end
+        end
+
         let size = if end_cursor >= (alloc_space + opt.padding) then
           alloc_space
         else

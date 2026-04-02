@@ -111,6 +111,7 @@ actor Main
     let compositor = Compositor(output, term_w, term_h)
     let input_actor = InputActor(input, compositor)
 
+
     // VBox fills the full terminal
     let vbox = VBox(compositor, term_w, term_h)
     let viewport = ViewPort(NorthWest, term_w, term_h)
@@ -122,17 +123,35 @@ actor Main
     vbox.add_child(top_label, SizeHint(term_w, 1), PackOption)
     top_label.trigger_render()
 
-    // Counter Frame
-    let frame: Frame = Frame(vbox, term_w, 7, "Frame", Red)
-    vbox.add_child(frame, SizeHint(term_w, 7), PackOption(where expand' = true, fill' = true))
+    let hline0 = HLine(vbox, 10)
+    let hline1 = HLine(vbox, 10)
+    vbox.add_child(hline0, SizeHint(term_w, 1), PackOption)
 
-    // Counter inside the frame
-    let counter = Counter(frame, term_w, 7, env, input)
-    frame.set_child(counter)
-    input_actor.register_focusable(counter)
-    counter.trigger_render()
+    let hbox = HBox(vbox, term_w, 4)
+    vbox.add_child(hbox, SizeHint(term_w, 4), PackOption(where expand' = true, fill' = true))
+
+    // Counter Frame 0
+    let frame0: Frame = Frame(hbox, term_w / 2, 4, "Frame 0", Red)
+    hbox.add_child(frame0, SizeHint(term_w / 2, 4), PackOption(where expand' = true, fill' = true))
+
+    // Counter inside the frame 0
+    let counter0 = Counter(frame0, term_w, 7, env, input)
+    frame0.set_child(counter0)
+    input_actor.register_focusable(counter0)
+    counter0.trigger_render()
+
+    // Counter Frame 1
+    let frame1: Frame = Frame(hbox, term_w / 2, 4, "Frame 1", Red)
+    hbox.add_child(frame1, SizeHint(term_w / 2, 4), PackOption(where expand' = true, fill' = true))
+
+    // Counter inside the frame 1
+    let counter1 = Counter(frame1, term_w, 7, env, input)
+    frame1.set_child(counter1)
+    input_actor.register_focusable(counter1)
+    counter1.trigger_render()
 
     // Bottom label
+    vbox.add_child(hline1, SizeHint(term_w, 1), PackOption)
     let bottom_label = Label(vbox, term_w, 1, "Bottom of VBox", Red)
     vbox.add_child(bottom_label, SizeHint(term_w, 1), PackOption(where from_end' = true))
     bottom_label.trigger_render()
