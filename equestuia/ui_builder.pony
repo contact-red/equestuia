@@ -252,9 +252,11 @@ class ref UIBuilder
       end
     end
 
-    // Return root — caller must call compositor.set_root() to kick off layout
+    // Register root for resize and return
     match root
-    | let r: Widget tag => r
+    | let r: Widget tag =>
+      _input_actor.register_widget(r)
+      r
     else
       BuilderError(0, "empty DSL: no widgets defined")
     end
