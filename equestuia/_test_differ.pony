@@ -24,7 +24,7 @@ class \nodoc\ iso _TestDifferSingleChange is UnitTest
 
   fun apply(h: TestHelper) =>
     // 3x2 grid, flat index 4 → col=1, row=1
-    let curr = match GridFactory(3, 2, recover val
+    let curr = GridFactory(3, 2, recover val
       let arr = Array[Cell](6)
       for i in Range(0, 6) do
         if i == 4 then
@@ -35,11 +35,6 @@ class \nodoc\ iso _TestDifferSingleChange is UnitTest
       end
       arr
     end)
-    | let g: Grid => g
-    | let _: GridDimensionMismatch =>
-      h.fail("unexpected GridDimensionMismatch")
-      return
-    end
     let prev = Grid.filled(3, 2, Cell.empty())
     let changes = Differ.diff(prev, curr)
     h.assert_eq[USize](1, changes.size())

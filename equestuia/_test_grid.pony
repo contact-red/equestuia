@@ -13,24 +13,29 @@ class \nodoc\ iso _TestGridCreate is UnitTest
       end
       arr
     end
-    match GridFactory(3, 2, cells)
-    | let g: Grid =>
-      h.assert_eq[USize](3, g.width)
-      h.assert_eq[USize](2, g.height)
-    | let _: GridDimensionMismatch =>
-      h.fail("unexpected GridDimensionMismatch")
-    end
+    let g = GridFactory(3, 2, cells)
+    h.assert_eq[USize](3, g.width)
+    h.assert_eq[USize](2, g.height)
 
 class \nodoc\ iso _TestGridDimensionMismatch is UnitTest
   fun name(): String => "Grid.dimension_mismatch"
 
   fun apply(h: TestHelper) =>
+    // When cells.size() != w * h, GridFactory returns an empty grid
     let cells = recover val Array[Cell](2) .> push(Cell.empty()) .> push(Cell.empty()) end
-    match GridFactory(3, 2, cells)
-    | let _: Grid =>
-      h.fail("expected GridDimensionMismatch")
-    | let _: GridDimensionMismatch =>
-      None // correct
+    let g = GridFactory(3, 2, cells)
+    h.assert_eq[USize](3, g.width)
+    h.assert_eq[USize](2, g.height)
+    // All cells should be empty
+    for row in Range(0, 2) do
+      for col in Range(0, 3) do
+        match g(col, row)
+        | let c: Cell =>
+          h.assert_eq[U32](Cell.empty().char, c.char)
+        | GridCellOutOfBounds =>
+          h.fail("unexpected out of bounds")
+        end
+      end
     end
 
 class \nodoc\ iso _TestGridApply is UnitTest
@@ -45,26 +50,22 @@ class \nodoc\ iso _TestGridApply is UnitTest
           .> push(Cell('D', 1, Default, Default, 0))
       arr
     end
-    match GridFactory(2, 2, cells)
-    | let g: Grid =>
-      match g(0, 0)
-      | let c: Cell => h.assert_eq[U32]('A', c.char)
-      | let _: GridCellOutOfBounds => h.fail("unexpected out of bounds")
-      end
-      match g(1, 0)
-      | let c: Cell => h.assert_eq[U32]('B', c.char)
-      | let _: GridCellOutOfBounds => h.fail("unexpected out of bounds")
-      end
-      match g(0, 1)
-      | let c: Cell => h.assert_eq[U32]('C', c.char)
-      | let _: GridCellOutOfBounds => h.fail("unexpected out of bounds")
-      end
-      match g(1, 1)
-      | let c: Cell => h.assert_eq[U32]('D', c.char)
-      | let _: GridCellOutOfBounds => h.fail("unexpected out of bounds")
-      end
-    | let _: GridDimensionMismatch =>
-      h.fail("unexpected GridDimensionMismatch")
+    let g = GridFactory(2, 2, cells)
+    match g(0, 0)
+    | let c: Cell => h.assert_eq[U32]('A', c.char)
+    | let _: GridCellOutOfBounds => h.fail("unexpected out of bounds")
+    end
+    match g(1, 0)
+    | let c: Cell => h.assert_eq[U32]('B', c.char)
+    | let _: GridCellOutOfBounds => h.fail("unexpected out of bounds")
+    end
+    match g(0, 1)
+    | let c: Cell => h.assert_eq[U32]('C', c.char)
+    | let _: GridCellOutOfBounds => h.fail("unexpected out of bounds")
+    end
+    match g(1, 1)
+    | let c: Cell => h.assert_eq[U32]('D', c.char)
+    | let _: GridCellOutOfBounds => h.fail("unexpected out of bounds")
     end
 
 class \nodoc\ iso _TestGridOutOfBounds is UnitTest
@@ -74,14 +75,10 @@ class \nodoc\ iso _TestGridOutOfBounds is UnitTest
     let cells = recover val
       Array[Cell](2) .> push(Cell.empty()) .> push(Cell.empty())
     end
-    match GridFactory(2, 1, cells)
-    | let g: Grid =>
-      match g(5, 0)
-      | let _: Cell => h.fail("expected out of bounds")
-      | let _: GridCellOutOfBounds => None // correct
-      end
-    | let _: GridDimensionMismatch =>
-      h.fail("unexpected GridDimensionMismatch")
+    let g = GridFactory(2, 1, cells)
+    match g(5, 0)
+    | let _: Cell => h.fail("expected out of bounds")
+    | let _: GridCellOutOfBounds => None // correct
     end
 
 class \nodoc\ iso _TestGridFilled is UnitTest

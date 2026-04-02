@@ -163,10 +163,7 @@ trait tag CompositeWidget is (Widget & WidgetParent)
     end
 
     let cells_val: Array[Cell] val = consume cells
-    match GridFactory(w, h, cells_val)
-    | let g: Grid => g
-    | GridDimensionMismatch => Grid.filled(w, h, Cell.empty())
-    end
+    GridFactory(w, h, cells_val)
 
   // -- Provided: coalesced child management --
 

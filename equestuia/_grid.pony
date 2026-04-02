@@ -4,12 +4,6 @@ primitive GridCellOutOfBounds
   """
   Returned when a cell access is outside the grid bounds.
   """
-primitive GridDimensionMismatch
-  """
-  Returned when cell array size does not match width * height.
-  """
-
-type GridError is (GridCellOutOfBounds | GridDimensionMismatch)
 
 class val Grid
   """
@@ -59,14 +53,13 @@ primitive GridFactory
   """
   Validated constructor for Grid.
   """
-  fun apply(width: USize, height: USize, cells: Array[Cell] val)
-    : (Grid | GridDimensionMismatch)
-  =>
+  fun apply(width: USize, height: USize, cells: Array[Cell] val): Grid =>
     """
-    Return a Grid if cells.size() == width * height, else GridDimensionMismatch.
+    Return a Grid from the given cells. If cells.size() != width * height,
+    returns an empty grid of the requested dimensions.
     """
     if cells.size() != (width * height) then
-      GridDimensionMismatch
+      Grid.filled(width, height, Cell.empty())
     else
       Grid._from(width, height, cells)
     end

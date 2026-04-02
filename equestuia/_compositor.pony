@@ -187,12 +187,7 @@ actor Compositor is WidgetParent
       cells
     end
 
-    let curr_frame = match GridFactory(sw, sh, cells_val)
-    | let g: Grid => g
-    | GridDimensionMismatch =>
-      _Unreachable()
-      return
-    end
+    let curr_frame = GridFactory(sw, sh, cells_val)
 
     // 3. Diff current vs previous
     let changes = Differ.diff(_prev_frame, curr_frame)

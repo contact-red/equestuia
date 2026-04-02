@@ -61,10 +61,7 @@ actor Counter is Widget
       arr
     end
 
-    match GridFactory(w, h, cells)
-    | let g: Grid => g
-    | GridDimensionMismatch => Grid.filled(w, h, Cell.empty())
-    end
+    GridFactory(w, h, cells)
 
   // -- Override behaviors --
 

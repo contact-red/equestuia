@@ -77,10 +77,7 @@ actor Frame is CompositeWidget
       arr
     end
 
-    match GridFactory(w, h, cells)
-    | let g: Grid => g
-    | GridDimensionMismatch => Grid.filled(w, h, Cell.empty())
-    end
+    GridFactory(w, h, cells)
 
   // -- Override render: blit child into interior with 1-cell inset --
 
@@ -133,10 +130,7 @@ actor Frame is CompositeWidget
     end
 
     let cells_val: Array[Cell] val = consume cells
-    match GridFactory(w, h, cells_val)
-    | let g: Grid => g
-    | GridDimensionMismatch => Grid.filled(w, h, Cell.empty())
-    end
+    GridFactory(w, h, cells_val)
 
   // -- Override resize: resize child to interior dimensions --
 
