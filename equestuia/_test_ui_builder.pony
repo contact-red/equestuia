@@ -1,12 +1,20 @@
 use "pony_test"
 
+// Mock output that discards writes — avoids stdin subscription keeping runtime alive
+actor _MockOutput is TerminalOutput
+  be write(data: Array[U8] val) => None
+
+// Mock input that does nothing — avoids subscribing to real stdin
+actor _MockInput is TerminalInput
+  be subscribe(listener: InputListener tag) => None
+  be dispose() => None
+
 class \nodoc\ iso _TestBuilderSimpleLabel is UnitTest
   fun name(): String => "UIBuilder.simple_label"
 
   fun apply(h: TestHelper) =>
-    let env = h.env
-    let output = StdoutOutput(env.out)
-    let input = StdinInput(env)
+    let output = _MockOutput
+    let input = _MockInput
     (let tw, let th) = TermSize()
     let compositor = Compositor(output, tw, th)
     let input_actor = InputActor(input, compositor)
@@ -27,9 +35,8 @@ class \nodoc\ iso _TestBuilderUnknownType is UnitTest
   fun name(): String => "UIBuilder.unknown_type"
 
   fun apply(h: TestHelper) =>
-    let env = h.env
-    let output = StdoutOutput(env.out)
-    let input = StdinInput(env)
+    let output = _MockOutput
+    let input = _MockInput
     (let tw, let th) = TermSize()
     let compositor = Compositor(output, tw, th)
     let input_actor = InputActor(input, compositor)
@@ -47,9 +54,8 @@ class \nodoc\ iso _TestBuilderCustomWidget is UnitTest
   fun name(): String => "UIBuilder.custom_widget"
 
   fun apply(h: TestHelper) =>
-    let env = h.env
-    let output = StdoutOutput(env.out)
-    let input = StdinInput(env)
+    let output = _MockOutput
+    let input = _MockInput
     (let tw, let th) = TermSize()
     let compositor = Compositor(output, tw, th)
     let input_actor = InputActor(input, compositor)
@@ -72,9 +78,8 @@ class \nodoc\ iso _TestBuilderComments is UnitTest
   fun name(): String => "UIBuilder.comments"
 
   fun apply(h: TestHelper) =>
-    let env = h.env
-    let output = StdoutOutput(env.out)
-    let input = StdinInput(env)
+    let output = _MockOutput
+    let input = _MockInput
     (let tw, let th) = TermSize()
     let compositor = Compositor(output, tw, th)
     let input_actor = InputActor(input, compositor)
