@@ -119,3 +119,45 @@ class \nodoc\ iso _TestTokenizeBadIndent is UnitTest
       h.assert_eq[USize](5, err.line)
     end
 
+class \nodoc\ iso _TestParseSize is UnitTest
+  fun name(): String => "UIParser.parse_size"
+
+  fun apply(h: TestHelper) =>
+    match UIParser.parse_size("80x24", 1)
+    | (let w: USize, let h': USize) =>
+      h.assert_eq[USize](80, w)
+      h.assert_eq[USize](24, h')
+    | let err: BuilderError =>
+      h.fail("unexpected error for 80x24: " + err.string())
+    end
+
+    match UIParser.parse_size("*x1", 1)
+    | (let w: USize, let h': USize) =>
+      h.assert_eq[USize](0, w)
+      h.assert_eq[USize](1, h')
+    | let err: BuilderError =>
+      h.fail("unexpected error for *x1: " + err.string())
+    end
+
+    match UIParser.parse_size("*", 1)
+    | (let w: USize, let h': USize) =>
+      h.assert_eq[USize](0, w)
+      h.assert_eq[USize](0, h')
+    | let err: BuilderError =>
+      h.fail("unexpected error for *: " + err.string())
+    end
+
+    match UIParser.parse_size("46x*", 1)
+    | (let w: USize, let h': USize) =>
+      h.assert_eq[USize](46, w)
+      h.assert_eq[USize](0, h')
+    | let err: BuilderError =>
+      h.fail("unexpected error for 46x*: " + err.string())
+    end
+
+    match UIParser.parse_size("bad", 1)
+    | (let w: USize, let h': USize) =>
+      h.fail("expected BuilderError for 'bad'")
+    | let err: BuilderError =>
+      h.assert_true(true)
+    end

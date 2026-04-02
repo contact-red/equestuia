@@ -67,3 +67,4 @@ actor \nodoc\ Main is TestList
     test(_TestTokenizePackLine)
     test(_TestTokenizeSizeStar)
     test(_TestTokenizeBadIndent)
+    test(_TestParseSize)

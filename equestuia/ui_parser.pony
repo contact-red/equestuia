@@ -179,3 +179,32 @@ primitive UIParser
     else
       false
     end
+
+  fun parse_size(size_str: String, line_num: USize)
+    : ((USize, USize) | BuilderError)
+  =>
+    """
+    Parse a size literal: "*" → (0, 0), "WxH" → (W, H).
+    An asterisk in either position means 0 (unconstrained).
+    """
+    if size_str == "*" then
+      return (0, 0)
+    end
+
+    if size_str.contains("x") then
+      let parts = size_str.split_by("x")
+      try
+        if parts.size() != 2 then error end
+        let w_str: String val = parts(0)?
+        let h_str: String val = parts(1)?
+        let w: USize = if w_str == "*" then 0 else w_str.usize()? end
+        let h: USize = if h_str == "*" then 0 else h_str.usize()? end
+        (w, h)
+      else
+        BuilderError(line_num,
+          "invalid size literal: " + size_str)
+      end
+    else
+      BuilderError(line_num,
+        "invalid size literal: " + size_str)
+    end
