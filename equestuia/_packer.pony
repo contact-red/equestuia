@@ -42,7 +42,7 @@ primitive Packer
     axis: PackAxis,
     container_w: USize,
     container_h: USize,
-    children: Array[(SizeHint, PackOption)] val)
+    children: Array[(USize, USize, PackOption)] val)
     : Array[Allocation] val
   =>
     """
@@ -59,7 +59,7 @@ primitive Packer
     let end_indices = Array[USize]
     for ci in Range(0, children.size()) do
       try
-        (_, let opt) = children(ci)?
+        (_, _, let opt) = children(ci)?
         if opt.from_end then
           end_indices.push(ci)
         else
@@ -76,10 +76,10 @@ primitive Packer
     var fixed_preferred: USize = 0
     for ti in Range(0, children.size()) do
       try
-        (let hint, let opt) = children(ti)?
+        (let pw, let ph, let opt) = children(ti)?
         let pref = match axis
-        | Horizontal => hint.preferred_width
-        | Vertical => hint.preferred_height
+        | Horizontal => pw
+        | Vertical => ph
         end
         total_preferred = total_preferred + pref
         total_padding = total_padding + opt.padding
@@ -119,10 +119,10 @@ primitive Packer
     var cursor: USize = 0
     for i in start_indices.values() do
       try
-        (let hint, let opt) = children(i)?
+        (let pw, let ph, let opt) = children(i)?
         let pref = match axis
-        | Horizontal => hint.preferred_width
-        | Vertical => hint.preferred_height
+        | Horizontal => pw
+        | Vertical => ph
         end
 
         cursor = cursor + opt.padding
@@ -195,10 +195,10 @@ primitive Packer
     var end_total_padding: USize = 0
     for i in end_indices.values() do
       try
-        (let hint, let opt) = children(i)?
+        (let pw, let ph, let opt) = children(i)?
         let pref = match axis
-        | Horizontal => hint.preferred_width
-        | Vertical => hint.preferred_height
+        | Horizontal => pw
+        | Vertical => ph
         end
         end_total_padding = end_total_padding + opt.padding
         if opt.expand then
@@ -222,10 +222,10 @@ primitive Packer
 
     for i in end_indices.values() do
       try
-        (let hint, let opt) = children(i)?
+        (let pw, let ph, let opt) = children(i)?
         let pref = match axis
-        | Horizontal => hint.preferred_width
-        | Vertical => hint.preferred_height
+        | Horizontal => pw
+        | Vertical => ph
         end
 
         var alloc_space: USize = pref

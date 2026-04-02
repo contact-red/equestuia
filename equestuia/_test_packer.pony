@@ -7,8 +7,8 @@ class \nodoc\ iso _TestPackerSingleChild is UnitTest
 
   fun apply(h: TestHelper) =>
     let children = recover val
-      Array[(SizeHint, PackOption)](1)
-        .> push((SizeHint(10, 5), PackOption))
+      Array[(USize, USize, PackOption)](1)
+        .> push((10, 5, PackOption))
     end
     let result = Packer.pack(Horizontal, 80, 24, children)
     h.assert_eq[USize](1, result.size())
@@ -27,9 +27,9 @@ class \nodoc\ iso _TestPackerTwoChildrenHorizontal is UnitTest
 
   fun apply(h: TestHelper) =>
     let children = recover val
-      Array[(SizeHint, PackOption)](2)
-        .> push((SizeHint(10, 5), PackOption))
-        .> push((SizeHint(20, 5), PackOption))
+      Array[(USize, USize, PackOption)](2)
+        .> push((10, 5, PackOption))
+        .> push((20, 5, PackOption))
     end
     let result = Packer.pack(Horizontal, 80, 24, children)
     h.assert_eq[USize](2, result.size())
@@ -47,9 +47,9 @@ class \nodoc\ iso _TestPackerTwoChildrenVertical is UnitTest
 
   fun apply(h: TestHelper) =>
     let children = recover val
-      Array[(SizeHint, PackOption)](2)
-        .> push((SizeHint(10, 5), PackOption))
-        .> push((SizeHint(10, 8), PackOption))
+      Array[(USize, USize, PackOption)](2)
+        .> push((10, 5, PackOption))
+        .> push((10, 8, PackOption))
     end
     let result = Packer.pack(Vertical, 80, 24, children)
     h.assert_eq[USize](2, result.size())
@@ -67,9 +67,9 @@ class \nodoc\ iso _TestPackerPadding is UnitTest
 
   fun apply(h: TestHelper) =>
     let children = recover val
-      Array[(SizeHint, PackOption)](2)
-        .> push((SizeHint(10, 5), PackOption(where padding' = 2)))
-        .> push((SizeHint(10, 5), PackOption(where padding' = 2)))
+      Array[(USize, USize, PackOption)](2)
+        .> push((10, 5, PackOption(where padding' = 2)))
+        .> push((10, 5, PackOption(where padding' = 2)))
     end
     let result = Packer.pack(Horizontal, 80, 24, children)
     h.assert_eq[USize](2, result.size())
@@ -87,9 +87,9 @@ class \nodoc\ iso _TestPackerExpand is UnitTest
 
   fun apply(h: TestHelper) =>
     let children = recover val
-      Array[(SizeHint, PackOption)](2)
-        .> push((SizeHint(20, 5), PackOption))
-        .> push((SizeHint(10, 5), PackOption(where expand' = true, fill' = true)))
+      Array[(USize, USize, PackOption)](2)
+        .> push((20, 5, PackOption))
+        .> push((10, 5, PackOption(where expand' = true, fill' = true)))
     end
     let result = Packer.pack(Horizontal, 80, 24, children)
     h.assert_eq[USize](2, result.size())
@@ -105,9 +105,9 @@ class \nodoc\ iso _TestPackerExpandNoFill is UnitTest
 
   fun apply(h: TestHelper) =>
     let children = recover val
-      Array[(SizeHint, PackOption)](2)
-        .> push((SizeHint(20, 5), PackOption))
-        .> push((SizeHint(10, 5), PackOption(where expand' = true, fill' = false)))
+      Array[(USize, USize, PackOption)](2)
+        .> push((20, 5, PackOption))
+        .> push((10, 5, PackOption(where expand' = true, fill' = false)))
     end
     let result = Packer.pack(Horizontal, 80, 24, children)
     try
@@ -123,9 +123,9 @@ class \nodoc\ iso _TestPackerFromEnd is UnitTest
 
   fun apply(h: TestHelper) =>
     let children = recover val
-      Array[(SizeHint, PackOption)](2)
-        .> push((SizeHint(10, 5), PackOption))
-        .> push((SizeHint(10, 5), PackOption(where from_end' = true)))
+      Array[(USize, USize, PackOption)](2)
+        .> push((10, 5, PackOption))
+        .> push((10, 5, PackOption(where from_end' = true)))
     end
     let result = Packer.pack(Horizontal, 80, 24, children)
     h.assert_eq[USize](2, result.size())
@@ -141,9 +141,9 @@ class \nodoc\ iso _TestPackerOverflow is UnitTest
 
   fun apply(h: TestHelper) =>
     let children = recover val
-      Array[(SizeHint, PackOption)](2)
-        .> push((SizeHint(50, 5), PackOption))
-        .> push((SizeHint(50, 5), PackOption))
+      Array[(USize, USize, PackOption)](2)
+        .> push((50, 5, PackOption))
+        .> push((50, 5, PackOption))
     end
     let result = Packer.pack(Horizontal, 80, 24, children)
     try
@@ -166,9 +166,9 @@ class \nodoc\ iso _PropPackerTotalFitsContainer is Property1[_PackerSample]
   fun property(sample: _PackerSample, h: PropertyHelper) =>
     (let container_size, let num_children) = sample
     let children = recover val
-      let arr = Array[(SizeHint, PackOption)](num_children)
+      let arr = Array[(USize, USize, PackOption)](num_children)
       for i in Range(0, num_children) do
-        arr.push((SizeHint(5, 3), PackOption))
+        arr.push((5, 3, PackOption))
       end
       arr
     end
@@ -193,9 +193,9 @@ class \nodoc\ iso _PropPackerExpandFillsExactly is Property1[_PackerExpandSample
   fun property(sample: _PackerExpandSample, h: PropertyHelper) =>
     (let container_size, let num_children) = sample
     let children = recover val
-      let arr = Array[(SizeHint, PackOption)](num_children)
+      let arr = Array[(USize, USize, PackOption)](num_children)
       for i in Range(0, num_children) do
-        arr.push((SizeHint(3, 3), PackOption(where expand' = true, fill' = true)))
+        arr.push((3, 3, PackOption(where expand' = true, fill' = true)))
       end
       arr
     end

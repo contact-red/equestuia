@@ -26,15 +26,13 @@ actor Frame is CompositeWidget
 
   new create(
     p: WidgetParent tag,
-    w: USize,
-    h: USize,
     title: String val = "",
     border_color: Color = White,
     title_color: Color = BrightWhite)
   =>
     _parent = p
-    _width = w
-    _height = h
+    _width = 0
+    _height = 0
     _title = title
     _border_color = border_color
     _title_color = title_color
@@ -169,12 +167,10 @@ actor Frame is CompositeWidget
 
   be set_child(widget: Widget tag) =>
     """
-    Set the single child widget. Resizes it to the interior dimensions.
+    Set the single child widget. The child will be resized when the
+    frame's own resize arrives from its parent.
     """
     _child = widget
-    if (_width >= 2) and (_height >= 2) then
-      widget.resize(_width - 2, _height - 2)
-    end
 
   be set_title(title: String val) =>
     """

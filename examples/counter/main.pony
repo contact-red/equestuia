@@ -16,14 +16,12 @@ actor Counter is Widget
 
   new create(
     p: WidgetParent tag,
-    w: USize,
-    h: USize,
     env: Env,
     input: TerminalInput tag)
   =>
     _parent = p
-    _width = w
-    _height = h
+    _width = 0
+    _height = 0
     _env = env
     _input = input
 
@@ -113,46 +111,45 @@ actor Main
 
 
     // VBox fills the full terminal
-    let vbox = VBox(compositor, term_w, term_h)
+    let vbox = VBox(compositor)
     let viewport = ViewPort(NorthWest, term_w, term_h)
     compositor.register(vbox, viewport)
     input_actor.register_widget(vbox)
 
     // Top label
-    let top_label = Label(vbox, term_w, 1, "Top of VBox", Green)
-    vbox.add_child(top_label, SizeHint(term_w, 1), PackOption)
-    top_label.trigger_render()
+    let top_label = Label(vbox, "Top of VBox", Green)
+    vbox.add_child(top_label, term_w, 1)
 
-    let hline0 = HLine(vbox, 10)
-    let hline1 = HLine(vbox, 10)
-    vbox.add_child(hline0, SizeHint(term_w, 1), PackOption)
+    let hline0 = HLine(vbox)
+    let hline1 = HLine(vbox)
+    vbox.add_child(hline0, term_w, 1)
 
-    let hbox = HBox(vbox, term_w, 4)
-    vbox.add_child(hbox, SizeHint(term_w, 4), PackOption(where expand' = true, fill' = true))
+    let hbox = HBox(vbox)
+    vbox.add_child(hbox, term_w, 4, PackOption(where expand' = true, fill' = true))
 
     // Counter Frame 0
-    let frame0: Frame = Frame(hbox, term_w / 2, 4, "Frame 0", Red)
-    hbox.add_child(frame0, SizeHint(term_w / 2, 4), PackOption(where expand' = true, fill' = true))
+    let frame0 = Frame(hbox, "Frame 0", Red)
+    hbox.add_child(frame0, term_w / 2, 4, PackOption(where expand' = true, fill' = true))
 
     // Counter inside the frame 0
-    let counter0 = Counter(frame0, term_w, 7, env, input)
+    let counter0 = Counter(frame0, env, input)
     frame0.set_child(counter0)
     input_actor.register_focusable(counter0)
-    counter0.trigger_render()
 
     // Counter Frame 1
-    let frame1: Frame = Frame(hbox, term_w / 2, 4, "Frame 1", Red)
-    hbox.add_child(frame1, SizeHint(term_w / 2, 4), PackOption(where expand' = true, fill' = true))
+    let frame1 = Frame(hbox, "Frame 1", Red)
+    hbox.add_child(frame1, term_w / 2, 4, PackOption(where expand' = true, fill' = true))
 
     // Counter inside the frame 1
-    let counter1 = Counter(frame1, term_w, 7, env, input)
+    let counter1 = Counter(frame1, env, input)
     frame1.set_child(counter1)
     input_actor.register_focusable(counter1)
-    counter1.trigger_render()
 
     // Bottom label
-    vbox.add_child(hline1, SizeHint(term_w, 1), PackOption)
-    let bottom_label = Label(vbox, term_w, 1, "Bottom of VBox", Red)
-    vbox.add_child(bottom_label, SizeHint(term_w, 1), PackOption(where from_end' = true))
-    bottom_label.trigger_render()
+    vbox.add_child(hline1, term_w, 1)
+    let bottom_label = Label(vbox, "Bottom of VBox", Red)
+    vbox.add_child(bottom_label, term_w, 1, PackOption(where from_end' = true))
+
+    // Kick off the layout cascade — must be after all children are added
+    vbox.resize(term_w, term_h)
 

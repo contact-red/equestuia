@@ -18,16 +18,14 @@ actor TextBox is Widget
 
   new create(
     p: WidgetParent tag,
-    w: USize,
-    h: USize,
     text: String val = "",
     fg: Color = White,
     bg: Color = Default,
     wrap: Bool = true)
   =>
     _parent = p
-    _width = w
-    _height = h
+    _width = 0
+    _height = 0
     _text = text
     _fg = fg
     _bg = bg

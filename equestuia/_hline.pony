@@ -13,12 +13,11 @@ actor HLine is Widget
 
   new create(
     p: WidgetParent tag,
-    w: USize,
     ch: U32 = 0x2500,
     color: Color = White)
   =>
     _parent = p
-    _width = w
+    _width = 0
     _height = 1
     _char = ch
     _color = color

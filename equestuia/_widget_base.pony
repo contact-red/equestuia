@@ -121,6 +121,17 @@ trait tag CompositeWidget is (Widget & WidgetParent)
     Set or clear the dirty flag.
     """
 
+  // -- Provided: child registration --
+
+  fun ref register_child(widget: Widget tag) =>
+    """
+    Pre-register a child so it receives resize propagation immediately.
+    Call this from the constructor after creating internal child widgets.
+    Without this, children are only discovered when their first grid
+    arrives via receive_grid, which can race with resize.
+    """
+    child_grids().push((widget, Grid.filled(0, 0, Cell.empty())))
+
   // -- Provided: compositing render --
 
   fun ref render(): Grid =>

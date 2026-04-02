@@ -13,13 +13,12 @@ actor VLine is Widget
 
   new create(
     p: WidgetParent tag,
-    h: USize,
     ch: U32 = 0x2502,
     color: Color = White)
   =>
     _parent = p
     _width = 1
-    _height = h
+    _height = 0
     _char = ch
     _color = color
 

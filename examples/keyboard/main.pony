@@ -23,27 +23,29 @@ actor Main
      * Text box here
      */
 
-    let vbox = VBox(compositor, term_w, term_h)
+    let vbox = VBox(compositor)
     let viewport = ViewPort(NorthWest, term_w, term_h)
     compositor.register(vbox, viewport)
     input_actor.register_widget(vbox)
 
     // Top label
-    let top_label = Label(vbox, term_w, 1, "Keyboard Tester!", BrightGreen)
-    vbox.add_child(top_label, SizeHint(term_w, 1), PackOption)
-    top_label.trigger_render()
+    let top_label = Label(vbox, "Keyboard Tester!", BrightGreen)
+    vbox.add_child(top_label, term_w, 1)
 
     // Frame around the keyboard
-    let hbox: HBox = HBox(vbox, 100, 20)
+    let hbox: HBox = HBox(vbox)
 //    let b0: Label = Label(hbox,0,0,"")
 //    let b1: Label = Label(hbox,0,0,"")
 //    vbox.add_child(b0, SizeHint(1,1), PackOption(where expand' = true, fill' = true))
-    vbox.add_child(hbox, SizeHint(100, 20), PackOption)
+    vbox.add_child(hbox, 100, 20)
 //    vbox.add_child(b1, SizeHint(1,1), PackOption(where expand' = true, fill' = true))
 
     let keyb: Keyboard = Keyboard(hbox, input)
-    hbox.add_child(keyb, SizeHint(100, 20), PackOption)
+    hbox.add_child(keyb, 100, 20)
     input_actor.register_focusable(keyb)
+
+    // Kick off the layout cascade — must be after all children are added
+    vbox.resize(term_w, term_h)
 
 /*
   fun build_row(keyb_vbox: VBox): HBox =>
@@ -118,7 +120,8 @@ actor Keyboard is CompositeWidget
     _input = input
     _child_grids = Array[(Any tag, Grid)]
 
-    let rows = VBox(this, 100, 20)
+    let rows = VBox(this)
+    register_child(rows)
 
     render_row([ "`"; "1"; "2"; "3"; "4"; "5"; "6"; "7"; "8"; "9"; "0"; "-"; "+"; "Bksp"], rows)
     render_row([ "Tab"; "Q"; "W"; "E"; "R"; "T"; "Y"; "U"; "I"; "O"; "P"; "["; "]"; "\\"], rows)
@@ -126,23 +129,22 @@ actor Keyboard is CompositeWidget
     render_row([ "Shift"; "Z"; "X"; "C"; "V"; "B"; "N"; "M"; ","; "."; "/"; "Shift"], rows)
     render_row([ "Ctrl"; "Win"; "Alt"; "Space"; "Alt"; "Fn"; "Menu"; "Ctrl"], rows)
 
-    rows.trigger_render()
 
 
   fun ref render_row(kys: Array[String], rows: VBox) =>
-    let row1 = HBox(rows, 100, 20)
+    let row1 = HBox(rows)
 //    let b0: Label = Label(row1, 0, 0, "")
 //    row1.add_child(b0, SizeHint(0, 0), PackOption(where expand' = true,  fill' = true))
     for r in kys.values() do
-      let f: Frame = Frame(row1, 7, 3)
-      let l: Label = Label(f, 5, 1, r)
+      let f: Frame = Frame(row1)
+      let l: Label = Label(f, r)
       mapping.insert(r, l)
       f.set_child(l)
-      row1.add_child(f, SizeHint(r.size()+2, 3), PackOption)
+      row1.add_child(f, r.size()+2, 3)
     end
 //    let b1: Label = Label(row1, 0, 0, "")
 //    row1.add_child(b1, SizeHint(0, 0), PackOption(where expand' = true,  fill' = true))
-    rows.add_child(row1, SizeHint(100, 3), PackOption)
+    rows.add_child(row1, 100, 3)
 
 
 
