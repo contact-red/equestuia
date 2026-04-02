@@ -11,31 +11,40 @@ to a compositor that diffs and renders to the terminal.
 - `Color` — ANSI color union (Default, Black, Red, ..., BrightWhite)
 - `CellAttrs` — attribute bitfield constants (bold, dim, underline, blink, reverse)
 
-## Positioning
+## Layout
 
 - `Anchor` — compass direction (North, NorthEast, ..., Center)
-- `ViewPort` — position, offset, z-order
-- `PackOption` — GTK2-style packing (from_end, expand, fill, padding)
+- `ViewPort` — anchor, size, offset, z-order for compositor registration
+- `PackOption` — packing options (expand, fill, padding)
+- `Alignment` — container alignment (AlignStart, AlignCenter, AlignEnd)
 
-## Actors
+## Widgets
 
-- `Compositor` — composites widget grids, diffs, renders to TerminalOutput
-- `InputActor` — parses terminal input, routes events, manages focus
-- `HBox` / `VBox` — container widgets with GTK2-style packing
-- `Frame` — single-child container with box border and optional title
-- `Label` — single-line text display
+- `Label` — single-line text display with alignment
 - `TextBox` — multi-line text display with optional word wrap
 - `HLine` / `VLine` — horizontal/vertical line widgets
+- `HBox` / `VBox` — box containers with GTK2-style packing and alignment
+- `Frame` — single-child container with box border and optional title
 
-## I/O
+## Infrastructure
 
+- `Compositor` — composites widget grids, diffs, renders to TerminalOutput.
+  Use `set_root` for the common case of a full-screen root widget.
+- `InputActor` — parses terminal input, routes events, manages focus
 - `TerminalOutput` / `TerminalInput` — traits for I/O abstraction
 - `StdoutOutput` / `StdinInput` — default implementations
 - `TermSize` — query terminal dimensions via ioctl
 
 ## Widget Traits
 
-- `Widget` — base trait for all widget actors
+- `Widget` — base trait for all widget actors. Requires `state()` and `render()`.
 - `CompositeWidget` — extends Widget for containers with child compositing
 - `WidgetParent` — trait for anything that receives grids from children
+- `WidgetState` — bundles common widget fields (parent, width, height, etc.)
+
+## Utilities
+
+- `DrawingPrimitives` — helper functions for drawing shapes into cell arrays
+- `AnsiEncoder` — ANSI escape sequence encoder
+- `GridFactory` — validated Grid construction
 """

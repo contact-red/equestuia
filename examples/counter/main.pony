@@ -118,11 +118,11 @@ actor Main
     vbox.pack_start(hline0, term_w, 1)
 
     let hbox = HBox(vbox)
-    vbox.pack_start(hbox, term_w, 4, PackOption(where expand' = true, fill' = true))
+    vbox.pack_start(hbox, term_w, 4, PackOption(PackFill))
 
     // Counter Frame 0
     let frame0 = Frame(hbox, "Frame 0", Red)
-    hbox.pack_start(frame0, term_w / 2, 4, PackOption(where expand' = true, fill' = true))
+    hbox.pack_start(frame0, term_w / 2, 4, PackOption(PackFill))
 
     // Counter inside the frame 0
     let counter0 = Counter(frame0, env, input)
@@ -131,7 +131,7 @@ actor Main
 
     // Counter Frame 1
     let frame1 = Frame(hbox, "Frame 1", Red)
-    hbox.pack_start(frame1, term_w / 2, 4, PackOption(where expand' = true, fill' = true))
+    hbox.pack_start(frame1, term_w / 2, 4, PackOption(PackFill))
 
     // Counter inside the frame 1
     let counter1 = Counter(frame1, env, input)

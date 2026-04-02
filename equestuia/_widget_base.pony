@@ -89,8 +89,9 @@ trait tag CompositeWidget is (Widget & WidgetParent)
   triggers the actual recompose. Multiple grids arriving in quick
   succession are batched into a single render pass.
 
-  The user implements `render_background()` and `state()`. Everything
-  else is provided.
+  The user implements `state()`. Override `render_background()` to draw
+  custom content behind children (default is an empty grid).
+  Override `render()` for custom child compositing (e.g. HBox/VBox).
   """
 
   // -- Required: user must implement --

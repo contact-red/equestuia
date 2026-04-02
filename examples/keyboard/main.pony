@@ -20,7 +20,7 @@ actor Main
     let top_label = Label(vbox, "Keyboard Tester!", BrightGreen where align = AlignCenter)
     vbox.pack_start(top_label, 0, 1)
 
-    // HBox around the keyboard
+    // HBox around the keyboard, for alignment…
     let hbox: HBox = HBox(vbox, AlignCenter)
     hbox.set_debug_bg(Red)
 
@@ -55,16 +55,16 @@ actor Keyboard is CompositeWidget
     let rows = VBox(this)
     register_child(rows)
 
-    render_row([ "`"; "1"; "2"; "3"; "4"; "5"; "6"; "7"; "8"; "9"; "0"; "-"; "+"; "Bksp"], rows)
-    render_row([ "Tab"; "Q"; "W"; "E"; "R"; "T"; "Y"; "U"; "I"; "O"; "P"; "["; "]"; "\\"], rows)
+    render_row([ "`"; "1"; "2"; "3"; "4"; "5"; "6"; "7"; "8"; "9"; "0"; "-"; "+"; " Bksp"], rows)
+    render_row([ "Tab  "; "Q"; "W"; "E"; "R"; "T"; "Y"; "U"; "I"; "O"; "P"; "["; "]"; "\\"], rows)
     render_row([ "Caps"; "A"; "S"; "D"; "F"; "G"; "H"; "J"; "K"; "L"; ";"; "'"; "Enter"], rows)
-    render_row([ "Shift"; "Z"; "X"; "C"; "V"; "B"; "N"; "M"; ","; "."; "/"; "Shift"], rows)
-    render_row([ "Ctrl"; "Win"; "Alt"; "Space"; "Alt"; "Fn"; "Menu"; "Ctrl"], rows)
+    render_row([ "Shift "; "Z"; "X"; "C"; "V"; "B"; "N"; "M"; ","; "."; "/"; " Shift"], rows)
+    render_row([ "Ctrl"; "Win"; "Alt"; " Space "; "Alt"; "Fn"; "Menu"; "Ctrl"], rows)
 
 
 
   fun ref render_row(kys: Array[String], rows: VBox) =>
-    let row1 = HBox(rows)
+    let row1 = HBox(rows, AlignCenter)
     for r in kys.values() do
       let f: Frame = Frame(row1)
       let l: Label = Label(f, r)

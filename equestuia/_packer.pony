@@ -84,7 +84,8 @@ primitive Packer
         end
         total_preferred = total_preferred + pref
         total_padding = total_padding + opt.padding
-        if opt.expand then
+        match opt.mode
+        | PackExpand | PackFill =>
           expand_count = expand_count + 1
           expand_preferred = expand_preferred + pref
         else
@@ -135,7 +136,8 @@ primitive Packer
         end
 
         var alloc_space: USize = pref
-        if opt.expand and (expand_count > 0) then
+        let is_expanding = match opt.mode | PackExpand | PackFill => true else false end
+        if is_expanding and (expand_count > 0) then
           expand_seen = expand_seen + 1
           if expand_seen == expand_count then
             // Last expanding child gets whatever is left
@@ -157,7 +159,8 @@ primitive Packer
 
         let clamped_space = alloc_space.min(remaining)
 
-        let main_pos: USize = if opt.expand and (not opt.fill) then
+        let main_pos: USize = match opt.mode
+        | PackExpand =>
           let actual_size = pref.min(clamped_space)
           let centered_offset = (clamped_space - actual_size) / 2
           cursor + centered_offset
@@ -165,8 +168,8 @@ primitive Packer
           cursor
         end
 
-        let main_size: USize = if opt.expand and (not opt.fill) then
-          pref.min(clamped_space)
+        let main_size: USize = match opt.mode
+        | PackExpand => pref.min(clamped_space)
         else
           clamped_space
         end
@@ -202,7 +205,8 @@ primitive Packer
         | Vertical => ph
         end
         end_total_padding = end_total_padding + opt.padding
-        if opt.expand then
+        match opt.mode
+        | PackExpand | PackFill =>
           end_expand_count = end_expand_count + 1
           end_expand_preferred = end_expand_preferred + pref
         else
@@ -230,7 +234,8 @@ primitive Packer
         end
 
         var alloc_space: USize = pref
-        if opt.expand and (end_expand_count > 0) then
+        let is_expanding = match opt.mode | PackExpand | PackFill => true else false end
+        if is_expanding and (end_expand_count > 0) then
           end_expand_seen = end_expand_seen + 1
           if end_expand_seen == end_expand_count then
             alloc_space = if end_space_for_expanding > end_expand_allocated then

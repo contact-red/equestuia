@@ -1,19 +1,32 @@
+primitive PackFixed
+  """
+  Child gets its preferred size. No extra space claimed.
+  """
+primitive PackExpand
+  """
+  Child claims a share of extra space but stays at preferred size,
+  centered within its allocation.
+  """
+primitive PackFill
+  """
+  Child claims a share of extra space and stretches to fill it.
+  """
+
+type PackMode is (PackFixed | PackExpand | PackFill)
+
 class val PackOption
   """
-  Per-child packing configuration within a box container (GTK2-style).
+  Per-child packing configuration within a box container.
   """
-  let expand: Bool
-  let fill: Bool
+  let mode: PackMode
   let padding: USize
 
   new val create(
-    expand': Bool = false,
-    fill': Bool = false,
+    mode': PackMode = PackFixed,
     padding': USize = 0)
   =>
     """
-    Create a pack option. All fields default to false/zero.
+    Create a pack option. Defaults to fixed size with no padding.
     """
-    expand = expand'
-    fill = fill'
+    mode = mode'
     padding = padding'

@@ -89,7 +89,7 @@ class \nodoc\ iso _TestPackerExpand is UnitTest
     let children = recover val
       Array[(USize, USize, PackOption, Bool)](2)
         .> push((20, 5, PackOption, false))
-        .> push((10, 5, PackOption(where expand' = true, fill' = true), false))
+        .> push((10, 5, PackOption(PackFill), false))
     end
     let result = Packer.pack(Horizontal, 80, 24, children)
     h.assert_eq[USize](2, result.size())
@@ -107,7 +107,7 @@ class \nodoc\ iso _TestPackerExpandNoFill is UnitTest
     let children = recover val
       Array[(USize, USize, PackOption, Bool)](2)
         .> push((20, 5, PackOption, false))
-        .> push((10, 5, PackOption(where expand' = true, fill' = false), false))
+        .> push((10, 5, PackOption(PackExpand), false))
     end
     let result = Packer.pack(Horizontal, 80, 24, children)
     try
@@ -195,7 +195,7 @@ class \nodoc\ iso _PropPackerExpandFillsExactly is Property1[_PackerExpandSample
     let children = recover val
       let arr = Array[(USize, USize, PackOption, Bool)](num_children)
       for i in Range(0, num_children) do
-        arr.push((3, 3, PackOption(where expand' = true, fill' = true), false))
+        arr.push((3, 3, PackOption(PackFill), false))
       end
       arr
     end
