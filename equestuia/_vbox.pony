@@ -1,6 +1,6 @@
 use "collections"
 
-actor VBox is (Widget & WidgetParent)
+actor VBox is CompositeWidget
   """
   Vertical box container. Packs children top-to-bottom using
   GTK2-style expand/fill/padding semantics.
@@ -9,16 +9,27 @@ actor VBox is (Widget & WidgetParent)
   var _width: USize
   var _height: USize
   let _children: Array[(Any tag, SizeHint, PackOption)]
-  let _grids: Array[(Any tag, Grid)]
+  let _child_grids: Array[(Any tag, Grid)]
 
   new create(p: WidgetParent tag, w: USize, h: USize) =>
     _parent = p
     _width = w
     _height = h
     _children = Array[(Any tag, SizeHint, PackOption)]
-    _grids = Array[(Any tag, Grid)]
+    _child_grids = Array[(Any tag, Grid)]
 
-  // -- Widget required helpers --
+  // -- Widget + CompositeWidget required helpers --
+
+  fun ref parent(): WidgetParent tag => _parent
+  fun ref width(): USize => _width
+  fun ref height(): USize => _height
+  fun ref set_size(w: USize, h: USize) => _width = w; _height = h
+  fun ref child_grids(): Array[(Any tag, Grid)] => _child_grids
+
+  fun ref render_background(): Grid =>
+    Grid.filled(_width, _height, Cell.empty())
+
+  // -- Override render: position children using packer allocations --
 
   fun ref render(): Grid =>
     """
@@ -36,9 +47,9 @@ actor VBox is (Widget & WidgetParent)
         cells
       end
 
-    for i in Range(0, _grids.size().min(allocs.size())) do
+    for i in Range(0, _child_grids.size().min(allocs.size())) do
       try
-        (_, let grid) = _grids(i)?
+        (_, let grid) = _child_grids(i)?
         let alloc = allocs(i)?
         for row in Range(0, grid.height.min(alloc.height)) do
           for col in Range(0, grid.width.min(alloc.width)) do
@@ -58,12 +69,7 @@ actor VBox is (Widget & WidgetParent)
     let cells_val: Array[Cell] val = consume combined
     Grid._from(_width, _height, cells_val)
 
-  fun ref parent(): WidgetParent tag => _parent
-  fun ref width(): USize => _width
-  fun ref height(): USize => _height
-  fun ref set_size(w: USize, h: USize) => _width = w; _height = h
-
-  // -- Override resize to repack children --
+  // -- Override resize: repack children --
 
   be resize(w: USize, h: USize) =>
     """
@@ -72,23 +78,6 @@ actor VBox is (Widget & WidgetParent)
     set_size(w, h)
     _repack()
 
-  // -- WidgetParent --
-
-  be receive_grid(widget: Any tag, grid: Grid) =>
-    """
-    Receive an updated grid from a child and recompose.
-    """
-    for i in Range(0, _grids.size()) do
-      try
-        (let w, _) = _grids(i)?
-        if w is widget then
-          _grids(i)? = (w, grid)
-          render_and_send()
-          return
-        end
-      end
-    end
-
   // -- Container-specific --
 
   be add_child(widget: Widget tag, hint: SizeHint, option: PackOption) =>
@@ -96,7 +85,7 @@ actor VBox is (Widget & WidgetParent)
     Add a child widget with its size hint and pack option.
     """
     _children.push((widget, hint, option))
-    _grids.push((widget, Grid.filled(hint.preferred_width, hint.preferred_height, Cell.empty())))
+    _child_grids.push((widget, Grid.filled(hint.preferred_width, hint.preferred_height, Cell.empty())))
     _repack()
 
   fun ref _hints_and_opts(): Array[(SizeHint, PackOption)] val =>

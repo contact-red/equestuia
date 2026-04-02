@@ -1,6 +1,6 @@
 use "collections"
 
-actor Frame is (Widget & WidgetParent)
+actor Frame is CompositeWidget
   """
   A single-child container that draws a box border around its content.
   Optionally displays a title in the top border:
@@ -21,7 +21,7 @@ actor Frame is (Widget & WidgetParent)
   var _border_color: Color
   var _title_color: Color
   var _child: (Widget tag | None)
-  var _child_grid: Grid
+  let _child_grids: Array[(Any tag, Grid)]
 
   new create(
     p: WidgetParent tag,
@@ -38,22 +38,25 @@ actor Frame is (Widget & WidgetParent)
     _border_color = border_color
     _title_color = title_color
     _child = None
-    _child_grid = Grid.filled(0, 0, Cell.empty())
+    _child_grids = Array[(Any tag, Grid)]
 
-  // -- Widget required helpers --
+  // -- Widget + CompositeWidget required helpers --
 
   fun ref parent(): WidgetParent tag => _parent
   fun ref width(): USize => _width
   fun ref height(): USize => _height
   fun ref set_size(w: USize, h: USize) => _width = w; _height = h
+  fun ref child_grids(): Array[(Any tag, Grid)] => _child_grids
 
-  fun ref render(): Grid =>
+  fun ref render_background(): Grid =>
+    """
+    Draw the border with optional title.
+    """
     let w = _width
     let h = _height
     let title = _title
     let border_color = _border_color
     let title_color = _title_color
-    let child_grid = _child_grid
 
     let cells = recover val
       let size = w * h
@@ -63,57 +66,20 @@ actor Frame is (Widget & WidgetParent)
       end
 
       if (w >= 2) and (h >= 2) then
-        // Draw border
-        for row in Range(0, h) do
-          for col in Range(0, w) do
-            let is_top = (row == 0)
-            let is_bottom = (row == (h - 1))
-            let is_left = (col == 0)
-            let is_right = (col == (w - 1))
-
-            if is_top or is_bottom or is_left or is_right then
-              let ch: U32 =
-                if is_top and is_left then 0x250C       // ┌
-                elseif is_top and is_right then 0x2510   // ┐
-                elseif is_bottom and is_left then 0x2514 // └
-                elseif is_bottom and is_right then 0x2518 // ┘
-                elseif is_top or is_bottom then 0x2500   // ─
-                else 0x2502                              // │
-                end
-              try arr(((row * w) + col))? = Cell(ch, 1, border_color, Default, 0) end
-            end
-          end
-        end
+        DrawingPrimitives.draw_box(arr, w, h, w, h, border_color)
 
         // Draw title in top border: ┌─ Title ─────┐
         if title.size() > 0 then
-          // "─ " before title starts at col 1
           let max_title = if w > 6 then w - 6 else 0 end
           let title_len = title.size().min(max_title)
           if (title_len > 0) and (w > 5) then
-            // col 1 is already ─, col 2 = space
             try arr(2)? = Cell(' ', 1, border_color, Default, 0) end
-            // title chars starting at col 3
             for ti in Range(0, title_len) do
               try
                 arr(3 + ti)? = Cell(title(ti)?.u32(), 1, title_color, Default, 0)
               end
             end
-            // space after title
             try arr(3 + title_len)? = Cell(' ', 1, border_color, Default, 0) end
-            // remaining cols are already ─ from border drawing
-          end
-        end
-
-        // Blit child grid into interior
-        let inner_w = w - 2
-        let inner_h = h - 2
-        for crow in Range(0, child_grid.height.min(inner_h)) do
-          for ccol in Range(0, child_grid.width.min(inner_w)) do
-            match child_grid(ccol, crow)
-            | let c: Cell =>
-              try arr(((crow + 1) * w) + ccol + 1)? = c end
-            end
           end
         end
       end
@@ -126,7 +92,62 @@ actor Frame is (Widget & WidgetParent)
     | GridDimensionMismatch => Grid.filled(w, h, Cell.empty())
     end
 
-  // -- Override resize to resize child --
+  // -- Override render: blit child into interior with 1-cell inset --
+
+  fun ref render(): Grid =>
+    """
+    Draw border background, then blit the child grid into the interior.
+    """
+    let bg = render_background()
+    let w = _width
+    let h = _height
+
+    if (w < 3) or (h < 3) or (_child_grids.size() == 0) then
+      return bg
+    end
+
+    // Get the child's grid (first entry)
+    let child_grid = try
+      (_, let g) = _child_grids(0)?
+      g
+    else
+      return bg
+    end
+
+    let cells: Array[Cell] iso = recover iso
+      let size = w * h
+      let arr = Array[Cell](size)
+      // Copy background
+      for row in Range(0, h) do
+        for col in Range(0, w) do
+          match bg(col, row)
+          | let c: Cell => arr.push(c)
+          | GridCellOutOfBounds => arr.push(Cell.empty())
+          end
+        end
+      end
+      arr
+    end
+
+    // Blit child into interior (inset by 1)
+    let inner_w = w - 2
+    let inner_h = h - 2
+    for crow in Range(0, child_grid.height.min(inner_h)) do
+      for ccol in Range(0, child_grid.width.min(inner_w)) do
+        match child_grid(ccol, crow)
+        | let c: Cell =>
+          try cells(((crow + 1) * w) + ccol + 1)? = c end
+        end
+      end
+    end
+
+    let cells_val: Array[Cell] val = consume cells
+    match GridFactory(w, h, cells_val)
+    | let g: Grid => g
+    | GridDimensionMismatch => Grid.filled(w, h, Cell.empty())
+    end
+
+  // -- Override resize: resize child to interior dimensions --
 
   be resize(w: USize, h: USize) =>
     """
@@ -139,15 +160,6 @@ actor Frame is (Widget & WidgetParent)
         c.resize(w - 2, h - 2)
       end
     end
-    render_and_send()
-
-  // -- WidgetParent --
-
-  be receive_grid(widget: Any tag, grid: Grid) =>
-    """
-    Receive the child's grid and re-render.
-    """
-    _child_grid = grid
     render_and_send()
 
   // -- Container-specific --
