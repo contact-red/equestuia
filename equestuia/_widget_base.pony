@@ -107,10 +107,9 @@ trait tag CompositeWidget is (Widget & WidgetParent)
 
   fun ref register_child(widget: Widget tag) =>
     """
-    Pre-register a child so it receives resize propagation immediately.
-    Call this from the constructor after creating internal child widgets.
-    Without this, children are only discovered when their first grid
-    arrives via receive_grid, which can race with resize.
+    Register a child widget. Required before the child can send grids
+    or receive resize propagation. Call from the constructor after
+    creating child widgets.
     """
     state().child_grids.push((widget, Grid.filled(0, 0, Cell.empty())))
 
@@ -169,27 +168,23 @@ trait tag CompositeWidget is (Widget & WidgetParent)
 
   be receive_grid(widget: Any tag, grid: Grid) =>
     """
-    Receive a child's grid and store it. If not already dirty, mark dirty
-    and schedule a deferred recompose.
+    Receive a child's grid and store it. Only updates grids for children
+    previously registered via register_child, pack_start/pack_end, or
+    set_child. Unknown senders are ignored.
     """
     let s = state()
-    var found = false
     for i in Range(0, s.child_grids.size()) do
       try
         (let w, _) = s.child_grids(i)?
         if w is widget then
           s.child_grids(i)? = (w, grid)
-          found = true
-          break
+          if not s.dirty then
+            s.dirty = true
+            _deferred_render()
+          end
+          return
         end
       end
-    end
-    if not found then
-      s.child_grids.push((widget, grid))
-    end
-    if not s.dirty then
-      s.dirty = true
-      _deferred_render()
     end
 
   be _deferred_render() =>

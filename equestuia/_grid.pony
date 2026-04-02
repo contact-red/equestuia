@@ -44,8 +44,7 @@ class val Grid
       try
         _cells((row * width) + col)?
       else
-        _Unreachable()
-        Cell.empty() // compiler needs a return after the panic call
+        Cell.empty()
       end
     end
 

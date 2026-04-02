@@ -22,7 +22,7 @@ primitive AnsiEncoder
     """
     let code =
       match color
-      | let c: _Colorable => c.fg_code()
+      | let c: Colorable => c.fg_code()
       end
     _sgr(code.usize())
 
@@ -32,7 +32,7 @@ primitive AnsiEncoder
     """
     let code =
       match color
-      | let c: _Colorable => c.bg_code()
+      | let c: Colorable => c.bg_code()
       end
     _sgr(code.usize())
 

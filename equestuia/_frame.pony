@@ -156,6 +156,7 @@ actor Frame is CompositeWidget
     frame's own resize arrives from its parent.
     """
     _child = widget
+    _state.child_grids.push((widget, Grid.filled(0, 0, Cell.empty())))
 
   be set_title(title: String val) =>
     """

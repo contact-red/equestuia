@@ -130,6 +130,6 @@ type Color is
   | BrightBlack | BrightRed | BrightGreen | BrightYellow | BrightBlue
   | BrightMagenta | BrightCyan | BrightWhite )
 
-interface val _Colorable
+interface val Colorable
   fun fg_code(): U8
   fun bg_code(): U8
