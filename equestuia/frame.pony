@@ -152,11 +152,16 @@ actor Frame is CompositeWidget
 
   be set_child(widget: Widget tag) =>
     """
-    Set the single child widget. The child will be resized when the
-    frame's own resize arrives from its parent.
+    Set the single child widget. If the frame already has a size,
+    resizes the child to the interior dimensions immediately.
     """
     _child = widget
     _state.child_grids.push((widget, Grid.filled(0, 0, Cell.empty())))
+    let w = _state.width
+    let h = _state.height
+    if (w >= 2) and (h >= 2) then
+      widget.resize(w - 2, h - 2)
+    end
 
   be set_title(title: String val) =>
     """

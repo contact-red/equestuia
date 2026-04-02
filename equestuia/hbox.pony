@@ -82,17 +82,19 @@ actor HBox is CompositeWidget
 
   be pack_start(widget: Widget tag, w: USize, h: USize, option: PackOption = PackOption) =>
     """
-    Pack a child from the start (left for HBox).
+    Pack a child from the start (left). Repacks if already sized.
     """
     _children.push((widget, w, h, option, false))
     _state.child_grids.push((widget, Grid.filled(w, h, Cell.empty())))
+    if (_state.width > 0) or (_state.height > 0) then _repack() end
 
   be pack_end(widget: Widget tag, w: USize, h: USize, option: PackOption = PackOption) =>
     """
-    Pack a child from the end (right for HBox).
+    Pack a child from the end (right). Repacks if already sized.
     """
     _children.push((widget, w, h, option, true))
     _state.child_grids.push((widget, Grid.filled(w, h, Cell.empty())))
+    if (_state.width > 0) or (_state.height > 0) then _repack() end
 
   fun ref _pack_params(): Array[(USize, USize, PackOption, Bool)] val =>
     let n = _children.size()

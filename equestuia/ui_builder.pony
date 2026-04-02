@@ -67,7 +67,6 @@ class ref UIBuilder
       (let ln, let pl) = entry
       let indent = pl.indent
       let tokens = pl.tokens
-
       // Pop stack entries with indent >= current indent
       while stack.size() > 0 do
         try
@@ -253,11 +252,9 @@ class ref UIBuilder
       end
     end
 
-    // Set root on compositor and return
+    // Return root — caller must call compositor.set_root() to kick off layout
     match root
-    | let r: Widget tag =>
-      _compositor.set_root(r)
-      r
+    | let r: Widget tag => r
     else
       BuilderError(0, "empty DSL: no widgets defined")
     end

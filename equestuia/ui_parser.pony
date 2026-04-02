@@ -36,7 +36,7 @@ primitive UIParser
         result = result.substring(0, idx.isize()).clone()
       end
 
-      result.strip()
+      result.rstrip()
       result
     end
 
@@ -169,7 +169,36 @@ primitive UIParser
     end
 
   fun _is_size(word: String val): Bool =>
-    (word == "*") or word.contains("x")
+    """
+    A size is bare '*' or 'WxH' where W and H are digits or '*'.
+    Must not match words like 'vbox' that happen to contain 'x'.
+    """
+    if word == "*" then return true end
+    if not word.contains("x") then return false end
+    try
+      let x_pos = word.find("x")?
+      let w_part: String val = word.substring(0, x_pos.isize())
+      let h_part: String val = word.substring((x_pos + 1).isize())
+      _is_size_part(w_part) and _is_size_part(h_part)
+    else
+      false
+    end
+
+  fun _is_size_part(s: String val): Bool =>
+    """
+    A size part is '*' or all digits.
+    """
+    if s == "*" then return true end
+    if s.size() == 0 then return false end
+    var i: USize = 0
+    try
+      while i < s.size() do
+        let c = s(i)?
+        if (c < '0') or (c > '9') then return false end
+        i = i + 1
+      end
+    end
+    true
 
   fun _is_mode(word: String val): Bool =>
     match word

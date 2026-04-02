@@ -125,7 +125,9 @@ actor Main
       "  pack-end *x1\n" +
       "    label \"Bottom of VBox\" fg=red"
     )
-    | let root: Widget tag => None
+    | let root: Widget tag =>
+      compositor.register_root(root)
+      root.resize(term_w, term_h)
     | let e: BuilderError =>
       env.out.print("Builder error: " + e.string())
     end

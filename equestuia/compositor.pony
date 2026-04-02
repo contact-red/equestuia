@@ -36,11 +36,25 @@ actor Compositor is WidgetParent
     """
     Set the root widget. Registers it at NorthWest filling the full screen
     and sends it an initial resize with the current screen dimensions.
+
+    WARNING: The resize is sent from the compositor, not the caller.
+    If you need the resize to be ordered with other messages from the
+    caller, use register_root() + widget.resize() instead.
     """
     let viewport = ViewPort(NorthWest, _screen_width, _screen_height)
     _widgets.push((widget, viewport,
       Grid.filled(_screen_width, _screen_height, Cell.empty())))
     widget.resize(_screen_width, _screen_height)
+
+  be register_root(widget: Widget tag) =>
+    """
+    Register the root widget at NorthWest filling the full screen,
+    without sending a resize. The caller should send resize() to the
+    widget directly to ensure message ordering.
+    """
+    let viewport = ViewPort(NorthWest, _screen_width, _screen_height)
+    _widgets.push((widget, viewport,
+      Grid.filled(_screen_width, _screen_height, Cell.empty())))
 
   be register(widget: Any tag, viewport: ViewPort) =>
     """
