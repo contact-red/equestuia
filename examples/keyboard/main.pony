@@ -24,8 +24,6 @@ actor Main
      */
 
     let vbox = VBox(compositor)
-    let viewport = ViewPort(NorthWest, term_w, term_h)
-    compositor.register(vbox, viewport)
     input_actor.register_widget(vbox)
 
     // Top label
@@ -44,8 +42,8 @@ actor Main
     hbox.pack_start(keyb, 100, 20)
     input_actor.register_focusable(keyb)
 
-    // Kick off the layout cascade — must be after all children are added
-    vbox.resize(term_w, term_h)
+    // Register root and kick off layout — must be after all children are added
+    compositor.set_root(vbox)
 
 /*
   fun build_row(keyb_vbox: VBox): HBox =>

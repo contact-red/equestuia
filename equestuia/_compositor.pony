@@ -32,6 +32,16 @@ actor Compositor is WidgetParent
     end
     _output.write(consume init)
 
+  be set_root(widget: Widget tag) =>
+    """
+    Set the root widget. Registers it at NorthWest filling the full screen
+    and sends it an initial resize with the current screen dimensions.
+    """
+    let viewport = ViewPort(NorthWest, _screen_width, _screen_height)
+    _widgets.push((widget, viewport,
+      Grid.filled(_screen_width, _screen_height, Cell.empty())))
+    widget.resize(_screen_width, _screen_height)
+
   be register(widget: Any tag, viewport: ViewPort) =>
     """
     Register a widget with its viewport. The widget will be composited

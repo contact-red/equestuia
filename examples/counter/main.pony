@@ -107,8 +107,6 @@ actor Main
 
     // VBox fills the full terminal
     let vbox = VBox(compositor)
-    let viewport = ViewPort(NorthWest, term_w, term_h)
-    compositor.register(vbox, viewport)
     input_actor.register_widget(vbox)
 
     // Top label
@@ -145,6 +143,6 @@ actor Main
     let bottom_label = Label(vbox, "Bottom of VBox", Red)
     vbox.pack_end(bottom_label, term_w, 1)
 
-    // Kick off the layout cascade — must be after all children are added
-    vbox.resize(term_w, term_h)
+    // Register root and kick off layout — must be after all children are added
+    compositor.set_root(vbox)
 

@@ -58,6 +58,7 @@ actor Frame is CompositeWidget
 
         // Draw title in top border: ┌─ Title ─────┐
         if title.size() > 0 then
+          // 6 = 3 chars before title (┌─ ) + 3 chars after ( ─┐)
           let max_title = if w > 6 then w - 6 else 0 end
           let title_len = title.size().min(max_title)
           if (title_len > 0) and (w > 5) then
