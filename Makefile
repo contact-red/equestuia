@@ -19,5 +19,8 @@ fetch:
 counter: fetch | $(BUILD_DIR)
 	corral run -- ponyc -o $(BUILD_DIR) examples/counter
 
+keyboard: fetch | $(BUILD_DIR)
+	corral run -- ponyc -o $(BUILD_DIR) examples/keyboard
+
 clean:
 	rm -rf $(BUILD_DIR)

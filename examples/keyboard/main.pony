@@ -34,12 +34,16 @@ actor Main
     top_label.trigger_render()
 
     // Frame around the keyboard
-    let frame0: Frame = Frame(vbox, term_w / 2, 4, "Frame 0", Red)
-    vbox.add_child(frame0, SizeHint(term_w / 2, 4), PackOption(where expand' = true, fill' = true))
+    let hbox: HBox = HBox(vbox, 80, 20)
+    let b0: Label = Label(hbox,0,0,"")
+    let b1: Label = Label(hbox,0,0,"")
+    vbox.add_child(b0, SizeHint(1,1), PackOption(where expand' = true, fill' = true))
+    vbox.add_child(hbox, SizeHint(80, 10), PackOption)
+    vbox.add_child(b0, SizeHint(1,1), PackOption(where expand' = true, fill' = true))
 
-    let keyb: Keyboard = Keyboard(frame0, input)
+    let keyb: Keyboard = Keyboard(hbox, input)
+    hbox.add_child(keyb, SizeHint(80, 10), PackOption)
     input_actor.register_focusable(keyb)
-    frame0.set_child(keyb)
 
 /*
   fun build_row(keyb_vbox: VBox): HBox =>
@@ -103,6 +107,8 @@ actor Keyboard is CompositeWidget
   let _input: TerminalInput tag
   let _child_grids: Array[(Any tag, Grid)]
 
+  var mapping: Map[String, Label] = Map[String, Label]
+
   new create(
     p: WidgetParent tag,
     input: TerminalInput tag)
@@ -110,6 +116,46 @@ actor Keyboard is CompositeWidget
     _parent = p
     _input = input
     _child_grids = Array[(Any tag, Grid)]
+
+    let rows = VBox(this, 80, 24)
+
+    // Row 1: Q W E R T Y ...
+
+    render_row([ "`"; "1"; "2"; "3"; "4"; "5"; "6"; "7"; "8"; "9"; "0"; "-"; "+"; "Bksp"], rows)
+    render_row([ "Tab"; "Q"; "W"; "E"; "R"; "T"; "Y"; "U"; "I"; "O"; "P"; "["; "]"; "\\"], rows)
+    render_row([ "Caps"; "A"; "S"; "D"; "F"; "G"; "H"; "J"; "K"; "L"; ";"; "'"; "Enter"], rows)
+
+    rows.trigger_render()
+
+
+
+
+  fun ref render_row(kys: Array[String], rows: VBox) =>
+    let row1 = HBox(rows, 80, 3)
+    let b0: Label = Label(row1, 0, 0, "")
+    row1.add_child(b0, SizeHint(0, 0), PackOption(where expand' = true,  fill' = true))
+    for r in kys.values() do
+      let f: Frame = Frame(row1, 7, 3)
+      let l: Label = Label(f, 5, 1, r)
+      mapping.insert(r, l)
+      f.set_child(l)
+//      if (r.size() > 1) then
+//        row1.add_child(f, SizeHint(3, 3), PackOption(where expand' = true,  fill' = true))
+//      else
+        row1.add_child(f, SizeHint(r.size()+2, 3), PackOption)
+//      end
+    end
+    let b1: Label = Label(row1, 0, 0, "")
+    row1.add_child(b1, SizeHint(0, 0), PackOption(where expand' = true,  fill' = true))
+    rows.add_child(row1, SizeHint(80, 3), PackOption)
+
+
+
+
+
+
+
+
 
   // -- Widget + CompositeWidget required helpers --
 
