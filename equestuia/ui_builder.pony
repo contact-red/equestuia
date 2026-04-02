@@ -40,7 +40,7 @@ class ref UIBuilder
     var line_num: USize = 1
     for line in lines.values() do
       let cleaned = UIParser.strip_comments(line)
-      match UIParser.tokenize_line(line, line_num)
+      match UIParser.tokenize_line(cleaned, line_num)
       | let pl: ParsedLine =>
         if pl.tokens.size() > 0 then
           parsed.push((line_num, pl))

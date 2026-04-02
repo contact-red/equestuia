@@ -68,3 +68,7 @@ actor \nodoc\ Main is TestList
     test(_TestTokenizeSizeStar)
     test(_TestTokenizeBadIndent)
     test(_TestParseSize)
+    test(_TestBuilderSimpleLabel)
+    test(_TestBuilderUnknownType)
+    test(_TestBuilderCustomWidget)
+    test(_TestBuilderComments)
