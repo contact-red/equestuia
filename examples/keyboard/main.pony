@@ -34,15 +34,15 @@ actor Main
     top_label.trigger_render()
 
     // Frame around the keyboard
-    let hbox: HBox = HBox(vbox, 80, 20)
-    let b0: Label = Label(hbox,0,0,"")
-    let b1: Label = Label(hbox,0,0,"")
-    vbox.add_child(b0, SizeHint(1,1), PackOption(where expand' = true, fill' = true))
-    vbox.add_child(hbox, SizeHint(80, 10), PackOption)
-    vbox.add_child(b0, SizeHint(1,1), PackOption(where expand' = true, fill' = true))
+    let hbox: HBox = HBox(vbox, 100, 20)
+//    let b0: Label = Label(hbox,0,0,"")
+//    let b1: Label = Label(hbox,0,0,"")
+//    vbox.add_child(b0, SizeHint(1,1), PackOption(where expand' = true, fill' = true))
+    vbox.add_child(hbox, SizeHint(100, 20), PackOption)
+//    vbox.add_child(b1, SizeHint(1,1), PackOption(where expand' = true, fill' = true))
 
     let keyb: Keyboard = Keyboard(hbox, input)
-    hbox.add_child(keyb, SizeHint(80, 10), PackOption)
+    hbox.add_child(keyb, SizeHint(100, 20), PackOption)
     input_actor.register_focusable(keyb)
 
 /*
@@ -101,8 +101,8 @@ actor Keyboard is CompositeWidget
   Press 'q' to quit.
   """
   let _parent: WidgetParent tag
-  var _width: USize = 80
-  var _height: USize = 24
+  var _width: USize = 100
+  var _height: USize = 20
   var _focused: Bool = false
   let _input: TerminalInput tag
   let _child_grids: Array[(Any tag, Grid)]
@@ -118,37 +118,31 @@ actor Keyboard is CompositeWidget
     _input = input
     _child_grids = Array[(Any tag, Grid)]
 
-    let rows = VBox(this, 80, 24)
-
-    // Row 1: Q W E R T Y ...
+    let rows = VBox(this, 100, 20)
 
     render_row([ "`"; "1"; "2"; "3"; "4"; "5"; "6"; "7"; "8"; "9"; "0"; "-"; "+"; "Bksp"], rows)
     render_row([ "Tab"; "Q"; "W"; "E"; "R"; "T"; "Y"; "U"; "I"; "O"; "P"; "["; "]"; "\\"], rows)
     render_row([ "Caps"; "A"; "S"; "D"; "F"; "G"; "H"; "J"; "K"; "L"; ";"; "'"; "Enter"], rows)
+    render_row([ "Shift"; "Z"; "X"; "C"; "V"; "B"; "N"; "M"; ","; "."; "/"; "Shift"], rows)
+    render_row([ "Ctrl"; "Win"; "Alt"; "Space"; "Alt"; "Fn"; "Menu"; "Ctrl"], rows)
 
     rows.trigger_render()
 
 
-
-
   fun ref render_row(kys: Array[String], rows: VBox) =>
-    let row1 = HBox(rows, 80, 3)
-    let b0: Label = Label(row1, 0, 0, "")
-    row1.add_child(b0, SizeHint(0, 0), PackOption(where expand' = true,  fill' = true))
+    let row1 = HBox(rows, 100, 20)
+//    let b0: Label = Label(row1, 0, 0, "")
+//    row1.add_child(b0, SizeHint(0, 0), PackOption(where expand' = true,  fill' = true))
     for r in kys.values() do
       let f: Frame = Frame(row1, 7, 3)
       let l: Label = Label(f, 5, 1, r)
       mapping.insert(r, l)
       f.set_child(l)
-//      if (r.size() > 1) then
-//        row1.add_child(f, SizeHint(3, 3), PackOption(where expand' = true,  fill' = true))
-//      else
-        row1.add_child(f, SizeHint(r.size()+2, 3), PackOption)
-//      end
+      row1.add_child(f, SizeHint(r.size()+2, 3), PackOption)
     end
-    let b1: Label = Label(row1, 0, 0, "")
-    row1.add_child(b1, SizeHint(0, 0), PackOption(where expand' = true,  fill' = true))
-    rows.add_child(row1, SizeHint(80, 3), PackOption)
+//    let b1: Label = Label(row1, 0, 0, "")
+//    row1.add_child(b1, SizeHint(0, 0), PackOption(where expand' = true,  fill' = true))
+    rows.add_child(row1, SizeHint(100, 3), PackOption)
 
 
 
