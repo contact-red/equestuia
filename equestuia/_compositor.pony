@@ -15,6 +15,7 @@ actor Compositor is WidgetParent
   // Registered widgets: identity, viewport, latest grid.
   // Order in array is registration order; z_order is in ViewPort.
   var _widgets: Array[(Any tag, ViewPort, Grid)]
+  var _dirty: Bool = false
 
   new create(output: TerminalOutput tag, width: USize, height: USize) =>
     _output = output
@@ -62,14 +63,26 @@ actor Compositor is WidgetParent
 
   be receive_grid(widget: Any tag, grid: Grid) =>
     """
-    Receive an updated grid from a widget and recompose the frame.
+    Receive an updated grid from a widget. Stores the grid and schedules
+    a deferred recompose if not already pending.
     """
     try
       let idx = _find_widget(widget)?
       (let w, let vp, _) = _widgets(idx)?
       _widgets(idx)? = (w, vp, grid)
-      _compose_and_render()
+      if not _dirty then
+        _dirty = true
+        _deferred_compose()
+      end
     end
+
+  be _deferred_compose() =>
+    """
+    Runs after all queued receive_grid messages have been processed.
+    Performs one compose-and-render pass.
+    """
+    _dirty = false
+    _compose_and_render()
 
   be hit_test(col: USize, row: USize, requester: _HitTestRequester tag) =>
     """

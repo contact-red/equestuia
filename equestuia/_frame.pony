@@ -22,6 +22,7 @@ actor Frame is CompositeWidget
   var _title_color: Color
   var _child: (Widget tag | None)
   let _child_grids: Array[(Any tag, Grid)]
+  var _dirty: Bool = false
 
   new create(
     p: WidgetParent tag,
@@ -47,6 +48,8 @@ actor Frame is CompositeWidget
   fun ref height(): USize => _height
   fun ref set_size(w: USize, h: USize) => _width = w; _height = h
   fun ref child_grids(): Array[(Any tag, Grid)] => _child_grids
+  fun ref is_dirty(): Bool => _dirty
+  fun ref set_dirty(dirty: Bool) => _dirty = dirty
 
   fun ref render_background(): Grid =>
     """

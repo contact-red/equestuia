@@ -106,6 +106,7 @@ actor Keyboard is CompositeWidget
   var _focused: Bool = false
   let _input: TerminalInput tag
   let _child_grids: Array[(Any tag, Grid)]
+  var _dirty: Bool = false
 
   var mapping: Map[String, Label] = Map[String, Label]
 
@@ -164,6 +165,8 @@ actor Keyboard is CompositeWidget
   fun ref height(): USize => _height
   fun ref set_size(w: USize, h: USize) => _width = w; _height = h
   fun ref child_grids(): Array[(Any tag, Grid)] => _child_grids
+  fun ref is_dirty(): Bool => _dirty
+  fun ref set_dirty(dirty: Bool) => _dirty = dirty
 
   fun ref render_background(): Grid =>
     Grid.filled(_width, _height, Cell.empty())

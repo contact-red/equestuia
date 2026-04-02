@@ -88,36 +88,14 @@ trait tag CompositeWidget is (Widget & WidgetParent)
   A widget that contains child widgets. Extends Widget with child grid
   storage, compositing, and resize propagation.
 
-  The user implements `render_background()` for their own content and
-  `child_grids()` to expose the storage field. The trait handles
-  `receive_grid`, `resize` with child propagation, and composites
-  children on top of the background in `render`.
+  Uses dirty-flag coalescing: when a child grid arrives, the grid is
+  stored and the widget marks itself dirty. A deferred self-message
+  triggers the actual recompose. Multiple grids arriving in quick
+  succession are batched into a single render pass.
 
-  Typical usage:
-
-  ```
-  actor MyWidget is CompositeWidget
-    let _parent: WidgetParent tag
-    var _width: USize
-    var _height: USize
-    let _child_grids: Array[(Any tag, Grid)]
-
-    new create(p: WidgetParent tag, w: USize, h: USize) =>
-      _parent = p
-      _width = w
-      _height = h
-      _child_grids = Array[(Any tag, Grid)]
-
-    // Widget helpers
-    fun ref parent(): WidgetParent tag => _parent
-    fun ref width(): USize => _width
-    fun ref height(): USize => _height
-    fun ref set_size(w: USize, h: USize) => _width = w; _height = h
-    fun ref child_grids(): Array[(Any tag, Grid)] => _child_grids
-
-    fun ref render_background(): Grid =>
-      Grid.filled(width(), height(), Cell.empty())
-  ```
+  The user implements `render_background()` for their own content,
+  `child_grids()` to expose the storage field, and `is_dirty()`/
+  `set_dirty()` for the dirty flag.
   """
 
   // -- Required: user must implement --
@@ -131,6 +109,16 @@ trait tag CompositeWidget is (Widget & WidgetParent)
   fun ref child_grids(): Array[(Any tag, Grid)]
     """
     Return the child grid storage array (backed by a field on the actor).
+    """
+
+  fun ref is_dirty(): Bool
+    """
+    Return whether the widget needs a recompose.
+    """
+
+  fun ref set_dirty(dirty: Bool)
+    """
+    Set or clear the dirty flag.
     """
 
   // -- Provided: compositing render --
@@ -185,11 +173,12 @@ trait tag CompositeWidget is (Widget & WidgetParent)
     | GridDimensionMismatch => Grid.filled(w, h, Cell.empty())
     end
 
-  // -- Provided: child management --
+  // -- Provided: coalesced child management --
 
   be receive_grid(widget: Any tag, grid: Grid) =>
     """
-    Receive a child's grid, store it, and re-render.
+    Receive a child's grid and store it. If not already dirty, mark dirty
+    and schedule a deferred recompose.
     """
     let grids = child_grids()
     var found = false
@@ -206,6 +195,17 @@ trait tag CompositeWidget is (Widget & WidgetParent)
     if not found then
       grids.push((widget, grid))
     end
+    if not is_dirty() then
+      set_dirty(true)
+      _deferred_render()
+    end
+
+  be _deferred_render() =>
+    """
+    Runs after all queued receive_grid messages have been processed.
+    Performs one render pass and sends the result to the parent.
+    """
+    set_dirty(false)
     render_and_send()
 
   be resize(w: USize, h: USize) =>
@@ -219,4 +219,5 @@ trait tag CompositeWidget is (Widget & WidgetParent)
       | let r: Widget tag => r.resize(w, h)
       end
     end
+    // Resize is immediate — don't defer, children will send grids back
     render_and_send()
