@@ -46,11 +46,12 @@ actor Frame is CompositeWidget
     let border_color = _border_color
     let title_color = _title_color
 
+    let empty = _state.empty_cell()
     let cells = recover val
       let size = w * h
       let arr = Array[Cell](size)
       for i in Range(0, size) do
-        arr.push(Cell.empty())
+        arr.push(empty)
       end
 
       if (w >= 2) and (h >= 2) then
@@ -103,6 +104,7 @@ actor Frame is CompositeWidget
       return bg
     end
 
+    let empty = _state.empty_cell()
     let cells: Array[Cell] iso = recover iso
       let size = w * h
       let arr = Array[Cell](size)
@@ -111,7 +113,7 @@ actor Frame is CompositeWidget
         for col in Range(0, w) do
           match bg(col, row)
           | let c: Cell => arr.push(c)
-          | GridCellOutOfBounds => arr.push(Cell.empty())
+          | GridCellOutOfBounds => arr.push(empty)
           end
         end
       end

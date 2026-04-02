@@ -10,7 +10,15 @@ class ref WidgetState
   var height: USize = 0
   let child_grids: Array[(Any tag, Grid)]
   var dirty: Bool = false
+  var debug_bg: Color = Default
 
   new create(parent': WidgetParent tag) =>
     parent = parent'
     child_grids = Array[(Any tag, Grid)]
+
+  fun empty_cell(): Cell =>
+    """
+    Return the empty cell for this widget. Uses debug_bg as background
+    when set, making the widget's allocated space visible.
+    """
+    Cell(' ', 1, Default, debug_bg, 0)

@@ -71,6 +71,14 @@ trait tag Widget
     """
     render_and_send()
 
+  be set_debug_bg(color: Color) =>
+    """
+    Set a debug background color to visualize this widget's allocated space.
+    Use Default to disable.
+    """
+    state().debug_bg = color
+    render_and_send()
+
 trait tag CompositeWidget is (Widget & WidgetParent)
   """
   A widget that contains child widgets. Extends Widget with child grid
@@ -87,11 +95,12 @@ trait tag CompositeWidget is (Widget & WidgetParent)
 
   // -- Required: user must implement --
 
-  fun ref render_background(): Grid
+  fun ref render_background(): Grid =>
     """
     Produce the background grid before children are composited on top.
-    Return an empty grid if there is no background.
+    Default: empty grid using the widget's debug_bg color.
     """
+    Grid.filled(state().width, state().height, state().empty_cell())
 
   // -- Provided: child registration --
 
@@ -121,6 +130,7 @@ trait tag CompositeWidget is (Widget & WidgetParent)
       return bg
     end
 
+    let empty = s.empty_cell()
     let cells: Array[Cell] iso = recover iso
       let size = w * h
       let arr = Array[Cell](size)
@@ -129,7 +139,7 @@ trait tag CompositeWidget is (Widget & WidgetParent)
         for col in Range(0, w) do
           match bg(col, row)
           | let c: Cell => arr.push(c)
-          | GridCellOutOfBounds => arr.push(Cell.empty())
+          | GridCellOutOfBounds => arr.push(empty)
           end
         end
       end

@@ -7,17 +7,16 @@ actor HBox is CompositeWidget
   """
   let _state: WidgetState
   let _children: Array[(Any tag, USize, USize, PackOption, Bool)]
+  var _align: Alignment = AlignStart
 
-  new create(p: WidgetParent tag) =>
+  new create(p: WidgetParent tag, align: Alignment = AlignStart) =>
     _state = WidgetState(p)
     _children = Array[(Any tag, USize, USize, PackOption, Bool)]
+    _align = align
 
   // -- Widget + CompositeWidget required helpers --
 
   fun ref state(): WidgetState => _state
-
-  fun ref render_background(): Grid =>
-    Grid.filled(_state.width, _state.height, Cell.empty())
 
   // -- Override render: position children using packer allocations --
 
@@ -27,14 +26,15 @@ actor HBox is CompositeWidget
     """
     let w = _state.width
     let h = _state.height
-    let allocs = Packer.pack(Horizontal, w, h, _pack_params())
+    let allocs = Packer.pack(Horizontal, w, h, _pack_params(), _align)
 
+    let empty = _state.empty_cell()
     let combined: Array[Cell] iso =
       recover iso
         let size = w * h
         let cells = Array[Cell](size)
         for j in Range(0, size) do
-          cells.push(Cell.empty())
+          cells.push(empty)
         end
         cells
       end
@@ -73,6 +73,13 @@ actor HBox is CompositeWidget
 
   // -- Container-specific --
 
+  be set_align(align: Alignment) =>
+    """
+    Set the container alignment and re-render.
+    """
+    _align = align
+    _repack()
+
   be pack_start(widget: Widget tag, w: USize, h: USize, option: PackOption = PackOption) =>
     """
     Pack a child from the start (left for HBox).
@@ -98,7 +105,7 @@ actor HBox is CompositeWidget
     consume arr
 
   fun ref _repack() =>
-    let allocs = Packer.pack(Horizontal, _state.width, _state.height, _pack_params())
+    let allocs = Packer.pack(Horizontal, _state.width, _state.height, _pack_params(), _align)
 
     for i in Range(0, _children.size().min(allocs.size())) do
       try

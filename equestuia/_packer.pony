@@ -42,12 +42,13 @@ primitive Packer
     axis: PackAxis,
     container_w: USize,
     container_h: USize,
-    children: Array[(USize, USize, PackOption, Bool)] val)
+    children: Array[(USize, USize, PackOption, Bool)] val,
+    align: Alignment = AlignStart)
     : Array[Allocation] val
   =>
     """
     Compute child allocations within a container. Handles pack_start/pack_end,
-    expand/fill, padding, and proportional shrinking.
+    expand/fill, padding, proportional shrinking, and container alignment.
     """
     let container_main = match axis
     | Horizontal => container_w
@@ -275,6 +276,48 @@ primitive Packer
         | Vertical => Allocation(0, main_pos, cross_size, size)
         end
         result(i)? = consume alloc
+      end
+    end
+
+    // Apply container alignment offset to all pack_start children.
+    // pack_end children are already positioned from the end.
+    match align
+    | AlignStart => None
+    | let _: (AlignCenter | AlignEnd) =>
+      // Find the rightmost/bottommost extent of pack_start children
+      var max_extent: USize = 0
+      for si in start_indices.values() do
+        try
+          let a = result(si)?
+          let extent = match axis
+          | Horizontal => a.x + a.width
+          | Vertical => a.y + a.height
+          end
+          if extent > max_extent then max_extent = extent end
+        end
+      end
+      let remaining = if container_main > max_extent then
+        container_main - max_extent
+      else
+        0
+      end
+      let offset = match align
+      | AlignCenter => remaining / 2
+      | AlignEnd => remaining
+      else
+        0
+      end
+      if offset > 0 then
+        for si in start_indices.values() do
+          try
+            let a = result(si)?
+            let shifted = match axis
+            | Horizontal => Allocation(a.x + offset, a.y, a.width, a.height)
+            | Vertical => Allocation(a.x, a.y + offset, a.width, a.height)
+            end
+            result(si)? = consume shifted
+          end
+        end
       end
     end
 
