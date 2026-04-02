@@ -122,9 +122,13 @@ actor Main
     vbox.add_child(top_label, SizeHint(term_w, 1), PackOption)
     top_label.trigger_render()
 
-    // Counter in the middle, expands to fill
-    let counter = Counter(vbox, term_w, 7, env, input)
-    vbox.add_child(counter, SizeHint(term_w, 7), PackOption(where expand' = true, fill' = true))
+    // Counter Frame
+    let frame: Frame = Frame(vbox, term_w, 7, "Frame", Red)
+    vbox.add_child(frame, SizeHint(term_w, 7), PackOption(where expand' = true, fill' = true))
+
+    // Counter inside the frame
+    let counter = Counter(frame, term_w, 7, env, input)
+    frame.set_child(counter)
     input_actor.register_focusable(counter)
     counter.trigger_render()
 
