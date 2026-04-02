@@ -8,9 +8,7 @@ actor TextBox is Widget
   fit within the widget's width. When disabled, lines are hard-truncated
   at the width. Lines beyond the widget's height are not displayed.
   """
-  let _parent: WidgetParent tag
-  var _width: USize
-  var _height: USize
+  let _state: WidgetState
   var _text: String val
   var _fg: Color
   var _bg: Color
@@ -23,9 +21,7 @@ actor TextBox is Widget
     bg: Color = Default,
     wrap: Bool = true)
   =>
-    _parent = p
-    _width = 0
-    _height = 0
+    _state = WidgetState(p)
     _text = text
     _fg = fg
     _bg = bg
@@ -55,14 +51,11 @@ actor TextBox is Widget
 
   // -- Widget required helpers --
 
-  fun ref parent(): WidgetParent tag => _parent
-  fun ref width(): USize => _width
-  fun ref height(): USize => _height
-  fun ref set_size(w: USize, h: USize) => _width = w; _height = h
+  fun ref state(): WidgetState => _state
 
   fun ref render(): Grid =>
-    let w = _width
-    let h = _height
+    let w = _state.width
+    let h = _state.height
     let fg = _fg
     let bg = _bg
     let lines_ref = _layout_lines()
@@ -121,7 +114,7 @@ actor TextBox is Widget
     let raw_lines = _split_newlines()
 
     for raw_line in raw_lines.values() do
-      if _wrap and (raw_line.size() > _width) then
+      if _wrap and (raw_line.size() > _state.width) then
         _wrap_line(raw_line, result)
       else
         result.push(raw_line)
@@ -154,16 +147,16 @@ actor TextBox is Widget
 
   fun ref _wrap_line(line: String val, out: Array[String val] ref) =>
     """
-    Word-wrap a single line into multiple lines that fit within _width.
+    Word-wrap a single line into multiple lines that fit within _state.width.
     Breaks at the last space before the width limit. If a word is longer
-    than _width, hard-breaks it.
+    than _state.width, hard-breaks it.
     """
     var remaining = line
-    while remaining.size() > _width do
+    while remaining.size() > _state.width do
       // Find last space within width
-      var break_at = _width
+      var break_at = _state.width
       var found_space = false
-      var j = _width
+      var j = _state.width
       while j > 0 do
         j = j - 1
         try
@@ -181,8 +174,8 @@ actor TextBox is Widget
         remaining = remaining.substring((break_at + 1).isize())
       else
         // No space found — hard break at width
-        out.push(remaining.substring(0, _width.isize()))
-        remaining = remaining.substring(_width.isize())
+        out.push(remaining.substring(0, _state.width.isize()))
+        remaining = remaining.substring(_state.width.isize())
       end
     end
     // Remainder

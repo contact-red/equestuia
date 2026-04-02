@@ -5,9 +5,7 @@ actor Label is Widget
   A text display widget that does not accept focus. Renders a single
   line of text, truncated to the widget's width.
   """
-  let _parent: WidgetParent tag
-  var _width: USize
-  var _height: USize
+  let _state: WidgetState
   var _text: String val
   var _fg: Color
   var _bg: Color
@@ -18,9 +16,7 @@ actor Label is Widget
     fg: Color = White,
     bg: Color = Default)
   =>
-    _parent = p
-    _width = 0
-    _height = 0
+    _state = WidgetState(p)
     _text = text
     _fg = fg
     _bg = bg
@@ -42,22 +38,25 @@ actor Label is Widget
 
   // -- Widget required helpers --
 
-  fun ref parent(): WidgetParent tag => _parent
-  fun ref width(): USize => _width
-  fun ref height(): USize => _height
-  fun ref set_size(w: USize, h: USize) => _width = w; _height = h
+  fun ref state(): WidgetState => _state
 
   fun ref render(): Grid =>
-    let cells = recover val
-      let size = _width * _height
-      let arr = Array[Cell](size)
-      let text_len = _text.size().min(_width)
+    let w = _state.width
+    let h = _state.height
+    let text = _text
+    let fg = _fg
+    let bg = _bg
 
-      for row in Range(0, _height) do
-        for col in Range(0, _width) do
+    let cells = recover val
+      let size = w * h
+      let arr = Array[Cell](size)
+      let text_len = text.size().min(w)
+
+      for row in Range(0, h) do
+        for col in Range(0, w) do
           if (row == 0) and (col < text_len) then
             try
-              arr.push(Cell(_text(col)?.u32(), 1, _fg, _bg, 0))
+              arr.push(Cell(text(col)?.u32(), 1, fg, bg, 0))
             else
               arr.push(Cell.empty())
             end
@@ -69,7 +68,7 @@ actor Label is Widget
       arr
     end
 
-    match GridFactory(_width, _height, cells)
+    match GridFactory(w, h, cells)
     | let g: Grid => g
-    | GridDimensionMismatch => Grid.filled(_width, _height, Cell.empty())
+    | GridDimensionMismatch => Grid.filled(w, h, Cell.empty())
     end

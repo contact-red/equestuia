@@ -5,32 +5,19 @@ actor VBox is CompositeWidget
   Vertical box container. Packs children top-to-bottom using
   GTK2-style expand/fill/padding semantics.
   """
-  let _parent: WidgetParent tag
-  var _width: USize
-  var _height: USize
+  let _state: WidgetState
   let _children: Array[(Any tag, USize, USize, PackOption)]
-  let _child_grids: Array[(Any tag, Grid)]
-  var _dirty: Bool = false
 
   new create(p: WidgetParent tag) =>
-    _parent = p
-    _width = 0
-    _height = 0
+    _state = WidgetState(p)
     _children = Array[(Any tag, USize, USize, PackOption)]
-    _child_grids = Array[(Any tag, Grid)]
 
   // -- Widget + CompositeWidget required helpers --
 
-  fun ref parent(): WidgetParent tag => _parent
-  fun ref width(): USize => _width
-  fun ref height(): USize => _height
-  fun ref set_size(w: USize, h: USize) => _width = w; _height = h
-  fun ref child_grids(): Array[(Any tag, Grid)] => _child_grids
-  fun ref is_dirty(): Bool => _dirty
-  fun ref set_dirty(dirty: Bool) => _dirty = dirty
+  fun ref state(): WidgetState => _state
 
   fun ref render_background(): Grid =>
-    Grid.filled(_width, _height, Cell.empty())
+    Grid.filled(_state.width, _state.height, Cell.empty())
 
   // -- Override render: position children using packer allocations --
 
@@ -38,11 +25,13 @@ actor VBox is CompositeWidget
     """
     Compose all child grids into a single grid using packer allocations.
     """
-    let allocs = Packer.pack(Vertical, _width, _height, _pack_params())
+    let w = _state.width
+    let h = _state.height
+    let allocs = Packer.pack(Vertical, w, h, _pack_params())
 
     let combined: Array[Cell] iso =
       recover iso
-        let size = _width * _height
+        let size = w * h
         let cells = Array[Cell](size)
         for j in Range(0, size) do
           cells.push(Cell.empty())
@@ -50,18 +39,18 @@ actor VBox is CompositeWidget
         cells
       end
 
-    for i in Range(0, _child_grids.size().min(allocs.size())) do
+    for i in Range(0, _state.child_grids.size().min(allocs.size())) do
       try
-        (_, let grid) = _child_grids(i)?
+        (_, let grid) = _state.child_grids(i)?
         let alloc = allocs(i)?
         for row in Range(0, grid.height.min(alloc.height)) do
           for col in Range(0, grid.width.min(alloc.width)) do
             let dest_col = alloc.x + col
             let dest_row = alloc.y + row
-            if (dest_col < _width) and (dest_row < _height) then
+            if (dest_col < w) and (dest_row < h) then
               match grid(col, row)
               | let c: Cell =>
-                combined((dest_row * _width) + dest_col)? = c
+                combined((dest_row * w) + dest_col)? = c
               end
             end
           end
@@ -70,7 +59,7 @@ actor VBox is CompositeWidget
     end
 
     let cells_val: Array[Cell] val = consume combined
-    Grid._from(_width, _height, cells_val)
+    Grid._from(w, h, cells_val)
 
   // -- Override resize: repack children --
 
@@ -78,7 +67,8 @@ actor VBox is CompositeWidget
     """
     Update container size, repack children, and re-render.
     """
-    set_size(w, h)
+    _state.width = w
+    _state.height = h
     _repack()
 
   // -- Container-specific --
@@ -88,7 +78,7 @@ actor VBox is CompositeWidget
     Add a child widget with its preferred size and pack option.
     """
     _children.push((widget, w, h, option))
-    _child_grids.push((widget, Grid.filled(w, h, Cell.empty())))
+    _state.child_grids.push((widget, Grid.filled(w, h, Cell.empty())))
 
   fun ref _pack_params(): Array[(USize, USize, PackOption)] val =>
     let n = _children.size()
@@ -101,7 +91,7 @@ actor VBox is CompositeWidget
     consume arr
 
   fun ref _repack() =>
-    let allocs = Packer.pack(Vertical, _width, _height, _pack_params())
+    let allocs = Packer.pack(Vertical, _state.width, _state.height, _pack_params())
     for i in Range(0, _children.size().min(allocs.size())) do
       try
         (let w, _, _, _) = _children(i)?

@@ -5,9 +5,7 @@ actor VLine is Widget
   A vertical line widget, one column wide. Fills its height with a
   repeating character (defaults to │). Does not accept focus.
   """
-  let _parent: WidgetParent tag
-  var _width: USize
-  var _height: USize
+  let _state: WidgetState
   var _char: U32
   var _color: Color
 
@@ -16,9 +14,7 @@ actor VLine is Widget
     ch: U32 = 0x2502,
     color: Color = White)
   =>
-    _parent = p
-    _width = 1
-    _height = 0
+    _state = WidgetState(p)
     _char = ch
     _color = color
 
@@ -38,13 +34,12 @@ actor VLine is Widget
 
   // -- Widget required helpers --
 
-  fun ref parent(): WidgetParent tag => _parent
-  fun ref width(): USize => _width
-  fun ref height(): USize => _height
-  fun ref set_size(w: USize, h: USize) => _width = 1; _height = h
+  fun ref state(): WidgetState => _state
+
+  be resize(w: USize, h: USize) =>
+    _state.width = 1
+    _state.height = h
+    render_and_send()
 
   fun ref render(): Grid =>
-    let h = _height
-    let ch = _char
-    let color = _color
-    Grid.filled(1, h, Cell(ch, 1, color, Default, 0))
+    Grid.filled(1, _state.height, Cell(_char, 1, _color, Default, 0))

@@ -5,9 +5,7 @@ actor HLine is Widget
   A horizontal line widget, one row tall. Fills its width with a
   repeating character (defaults to ─). Does not accept focus.
   """
-  let _parent: WidgetParent tag
-  var _width: USize
-  var _height: USize
+  let _state: WidgetState
   var _char: U32
   var _color: Color
 
@@ -16,9 +14,7 @@ actor HLine is Widget
     ch: U32 = 0x2500,
     color: Color = White)
   =>
-    _parent = p
-    _width = 0
-    _height = 1
+    _state = WidgetState(p)
     _char = ch
     _color = color
 
@@ -38,13 +34,12 @@ actor HLine is Widget
 
   // -- Widget required helpers --
 
-  fun ref parent(): WidgetParent tag => _parent
-  fun ref width(): USize => _width
-  fun ref height(): USize => _height
-  fun ref set_size(w: USize, h: USize) => _width = w; _height = 1
+  fun ref state(): WidgetState => _state
+
+  be resize(w: USize, h: USize) =>
+    _state.width = w
+    _state.height = 1
+    render_and_send()
 
   fun ref render(): Grid =>
-    let w = _width
-    let ch = _char
-    let color = _color
-    Grid.filled(w, 1, Cell(ch, 1, color, Default, 0))
+    Grid.filled(_state.width, 1, Cell(_char, 1, _color, Default, 0))

@@ -10,53 +10,41 @@ trait tag WidgetParent
 trait tag Widget
   """
   Base trait for all widget actors. Users implement their own actors
-  with this trait. Required helpers provide access to widget state;
-  default behavior implementations handle common patterns.
+  with this trait.
 
-  The required fun ref methods are uncallable from outside the actor
-  because external references are always `tag` capability.
+  Required: `state()` returns the WidgetState field, `render()` produces
+  the grid. All other behaviors have default implementations.
+
+  The `fun ref` methods are uncallable from outside the actor because
+  external references are always `tag` capability.
   """
 
   // -- Required: user must implement these --
+
+  fun ref state(): WidgetState
+    """
+    Return the widget's state. Backed by a field on the actor.
+    """
 
   fun ref render(): Grid
     """
     Produce a grid representing the current widget state.
     """
 
-  fun ref parent(): WidgetParent tag
-    """
-    Return the parent that receives this widget's grids.
-    """
-
-  fun ref width(): USize
-    """
-    Return the current allocated width.
-    """
-
-  fun ref height(): USize
-    """
-    Return the current allocated height.
-    """
-
-  fun ref set_size(w: USize, h: USize)
-    """
-    Store the new allocated dimensions.
-    """
-
-  // -- Provided: default implementations using the required helpers --
+  // -- Provided: default implementations --
 
   fun ref render_and_send() =>
     """
     Render the widget and send the grid to the parent.
     """
-    parent().receive_grid(this, render())
+    state().parent.receive_grid(this, render())
 
   be resize(w: USize, h: USize) =>
     """
     Update allocated size and re-render.
     """
-    set_size(w, h)
+    state().width = w
+    state().height = h
     render_and_send()
 
   be trigger_render() =>
@@ -93,9 +81,8 @@ trait tag CompositeWidget is (Widget & WidgetParent)
   triggers the actual recompose. Multiple grids arriving in quick
   succession are batched into a single render pass.
 
-  The user implements `render_background()` for their own content,
-  `child_grids()` to expose the storage field, and `is_dirty()`/
-  `set_dirty()` for the dirty flag.
+  The user implements `render_background()` and `state()`. Everything
+  else is provided.
   """
 
   // -- Required: user must implement --
@@ -104,21 +91,6 @@ trait tag CompositeWidget is (Widget & WidgetParent)
     """
     Produce the background grid before children are composited on top.
     Return an empty grid if there is no background.
-    """
-
-  fun ref child_grids(): Array[(Any tag, Grid)]
-    """
-    Return the child grid storage array (backed by a field on the actor).
-    """
-
-  fun ref is_dirty(): Bool
-    """
-    Return whether the widget needs a recompose.
-    """
-
-  fun ref set_dirty(dirty: Bool)
-    """
-    Set or clear the dirty flag.
     """
 
   // -- Provided: child registration --
@@ -130,7 +102,7 @@ trait tag CompositeWidget is (Widget & WidgetParent)
     Without this, children are only discovered when their first grid
     arrives via receive_grid, which can race with resize.
     """
-    child_grids().push((widget, Grid.filled(0, 0, Cell.empty())))
+    state().child_grids.push((widget, Grid.filled(0, 0, Cell.empty())))
 
   // -- Provided: compositing render --
 
@@ -140,9 +112,10 @@ trait tag CompositeWidget is (Widget & WidgetParent)
     Non-empty cells from children overwrite the background.
     """
     let bg = render_background()
-    let w = width()
-    let h = height()
-    let grids = child_grids()
+    let s = state()
+    let w = s.width
+    let h = s.height
+    let grids = s.child_grids
 
     if grids.size() == 0 then
       return bg
@@ -191,23 +164,23 @@ trait tag CompositeWidget is (Widget & WidgetParent)
     Receive a child's grid and store it. If not already dirty, mark dirty
     and schedule a deferred recompose.
     """
-    let grids = child_grids()
+    let s = state()
     var found = false
-    for i in Range(0, grids.size()) do
+    for i in Range(0, s.child_grids.size()) do
       try
-        (let w, _) = grids(i)?
+        (let w, _) = s.child_grids(i)?
         if w is widget then
-          grids(i)? = (w, grid)
+          s.child_grids(i)? = (w, grid)
           found = true
           break
         end
       end
     end
     if not found then
-      grids.push((widget, grid))
+      s.child_grids.push((widget, grid))
     end
-    if not is_dirty() then
-      set_dirty(true)
+    if not s.dirty then
+      s.dirty = true
       _deferred_render()
     end
 
@@ -216,19 +189,20 @@ trait tag CompositeWidget is (Widget & WidgetParent)
     Runs after all queued receive_grid messages have been processed.
     Performs one render pass and sends the result to the parent.
     """
-    set_dirty(false)
+    state().dirty = false
     render_and_send()
 
   be resize(w: USize, h: USize) =>
     """
     Update size, propagate resize to all children, and re-render.
     """
-    set_size(w, h)
-    for child in child_grids().values() do
+    let s = state()
+    s.width = w
+    s.height = h
+    for child in s.child_grids.values() do
       (let cw, _) = child
       match cw
       | let r: Widget tag => r.resize(w, h)
       end
     end
-    // Resize is immediate — don't defer, children will send grids back
     render_and_send()

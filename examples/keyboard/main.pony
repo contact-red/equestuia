@@ -102,13 +102,9 @@ actor Keyboard is CompositeWidget
   of framed key labels) and composites them on top of its own background.
   Press 'q' to quit.
   """
-  let _parent: WidgetParent tag
-  var _width: USize = 100
-  var _height: USize = 20
+  let _state: WidgetState
   var _focused: Bool = false
   let _input: TerminalInput tag
-  let _child_grids: Array[(Any tag, Grid)]
-  var _dirty: Bool = false
 
   var mapping: Map[String, Label] = Map[String, Label]
 
@@ -116,9 +112,8 @@ actor Keyboard is CompositeWidget
     p: WidgetParent tag,
     input: TerminalInput tag)
   =>
-    _parent = p
+    _state = WidgetState(p)
     _input = input
-    _child_grids = Array[(Any tag, Grid)]
 
     let rows = VBox(this)
     register_child(rows)
@@ -146,26 +141,12 @@ actor Keyboard is CompositeWidget
 //    row1.add_child(b1, SizeHint(0, 0), PackOption(where expand' = true,  fill' = true))
     rows.add_child(row1, 100, 3)
 
-
-
-
-
-
-
-
-
   // -- Widget + CompositeWidget required helpers --
 
-  fun ref parent(): WidgetParent tag => _parent
-  fun ref width(): USize => _width
-  fun ref height(): USize => _height
-  fun ref set_size(w: USize, h: USize) => _width = w; _height = h
-  fun ref child_grids(): Array[(Any tag, Grid)] => _child_grids
-  fun ref is_dirty(): Bool => _dirty
-  fun ref set_dirty(dirty: Bool) => _dirty = dirty
+  fun ref state(): WidgetState => _state
 
   fun ref render_background(): Grid =>
-    Grid.filled(_width, _height, Cell.empty())
+    Grid.filled(_state.width, _state.height, Cell.empty())
 
   // -- Override behaviors --
 
@@ -184,5 +165,3 @@ actor Keyboard is CompositeWidget
   be receive_blur() =>
     _focused = false
     render_and_send()
-
-

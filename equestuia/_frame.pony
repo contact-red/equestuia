@@ -14,15 +14,11 @@ actor Frame is CompositeWidget
   Frame always expands to the maximum size allowed by its parent.
   The child receives the interior dimensions (width - 2, height - 2).
   """
-  let _parent: WidgetParent tag
-  var _width: USize
-  var _height: USize
+  let _state: WidgetState
   var _title: String val
   var _border_color: Color
   var _title_color: Color
   var _child: (Widget tag | None)
-  let _child_grids: Array[(Any tag, Grid)]
-  var _dirty: Bool = false
 
   new create(
     p: WidgetParent tag,
@@ -30,31 +26,22 @@ actor Frame is CompositeWidget
     border_color: Color = White,
     title_color: Color = BrightWhite)
   =>
-    _parent = p
-    _width = 0
-    _height = 0
+    _state = WidgetState(p)
     _title = title
     _border_color = border_color
     _title_color = title_color
     _child = None
-    _child_grids = Array[(Any tag, Grid)]
 
   // -- Widget + CompositeWidget required helpers --
 
-  fun ref parent(): WidgetParent tag => _parent
-  fun ref width(): USize => _width
-  fun ref height(): USize => _height
-  fun ref set_size(w: USize, h: USize) => _width = w; _height = h
-  fun ref child_grids(): Array[(Any tag, Grid)] => _child_grids
-  fun ref is_dirty(): Bool => _dirty
-  fun ref set_dirty(dirty: Bool) => _dirty = dirty
+  fun ref state(): WidgetState => _state
 
   fun ref render_background(): Grid =>
     """
     Draw the border with optional title.
     """
-    let w = _width
-    let h = _height
+    let w = _state.width
+    let h = _state.height
     let title = _title
     let border_color = _border_color
     let title_color = _title_color
@@ -100,16 +87,16 @@ actor Frame is CompositeWidget
     Draw border background, then blit the child grid into the interior.
     """
     let bg = render_background()
-    let w = _width
-    let h = _height
+    let w = _state.width
+    let h = _state.height
 
-    if (w < 3) or (h < 3) or (_child_grids.size() == 0) then
+    if (w < 3) or (h < 3) or (_state.child_grids.size() == 0) then
       return bg
     end
 
     // Get the child's grid (first entry)
     let child_grid = try
-      (_, let g) = _child_grids(0)?
+      (_, let g) = _state.child_grids(0)?
       g
     else
       return bg
@@ -154,7 +141,8 @@ actor Frame is CompositeWidget
     """
     Update frame size and resize the child to the new interior dimensions.
     """
-    set_size(w, h)
+    _state.width = w
+    _state.height = h
     match _child
     | let c: Widget tag =>
       if (w >= 2) and (h >= 2) then
