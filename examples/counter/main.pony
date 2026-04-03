@@ -107,23 +107,25 @@ actor Main
     } val)
 
     match builder.build(
-      "vbox\n" +
-      "  pack-start *x1\n" +
-      "    label \"Top of VBox\" fg=green\n" +
-      "  pack-start *x1\n" +
-      "    hline\n" +
-      "  pack-start *x4 fill\n" +
-      "    hbox\n" +
-      "      pack-start 0x4 fill\n" +
-      "        frame \"Frame 0\" border-color=red\n" +
-      "          counter #counter0 focusable\n" +
-      "      pack-start 0x4 fill\n" +
-      "        frame \"Frame 1\" border-color=red\n" +
-      "          counter #counter1 focusable\n" +
-      "  pack-start *x1\n" +
-      "    hline\n" +
-      "  pack-end *x1\n" +
-      "    label \"Bottom of VBox\" fg=red"
+"""
+vbox
+  pack-start *x1
+    label "Top of VBox" fg=green
+  pack-start *x1
+    hline
+  pack-start *x4 fill
+    hbox
+      pack-start 0x4 fill
+        frame "Frame 0" border-color=red
+          counter #counter0 focusable
+      pack-start 0x4 fill
+        frame "Frame 1" border-color=red
+          counter #counter1 focusable
+  pack-start *x1
+    hline
+  pack-end *x1
+    label "Bottom of VBox" fg=red
+"""
     )
     | let root: Widget tag =>
       compositor.register_root(root)

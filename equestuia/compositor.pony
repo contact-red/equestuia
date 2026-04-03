@@ -32,58 +32,15 @@ actor Compositor is WidgetParent
     end
     _output.write(consume init)
 
-  be set_root(widget: Widget tag) =>
-    """
-    Set the root widget. Registers it at NorthWest filling the full screen
-    and sends it an initial resize with the current screen dimensions.
-
-    WARNING: The resize is sent from the compositor, not the caller.
-    If you need the resize to be ordered with other messages from the
-    caller, use register_root() + widget.resize() instead.
-    """
-    let viewport = ViewPort(NorthWest, _screen_width, _screen_height)
-    _widgets.push((widget, viewport,
-      Grid.filled(_screen_width, _screen_height, Cell.empty())))
-    widget.resize(_screen_width, _screen_height)
-
   be register_root(widget: Widget tag) =>
     """
-    Register the root widget at NorthWest filling the full screen,
-    without sending a resize. The caller should send resize() to the
-    widget directly to ensure message ordering.
+    Register the root widget at NorthWest filling the full screen.
+    Does not send a resize — the caller must send resize() to the
+    widget directly to ensure correct message ordering.
     """
     let viewport = ViewPort(NorthWest, _screen_width, _screen_height)
     _widgets.push((widget, viewport,
       Grid.filled(_screen_width, _screen_height, Cell.empty())))
-
-  be register(widget: Any tag, viewport: ViewPort) =>
-    """
-    Register a widget with its viewport. The widget will be composited
-    into the frame at the viewport's position and z-order.
-    """
-    _widgets.push((widget, viewport, Grid.filled(viewport.width, viewport.height, Cell.empty())))
-    _compose_and_render()
-
-  be unregister(widget: Any tag) =>
-    """
-    Remove a widget from the compositor.
-    """
-    try
-      let idx = _find_widget(widget)?
-      _widgets.delete(idx)?
-      _compose_and_render()
-    end
-
-  be update_viewport(widget: Any tag, viewport: ViewPort) =>
-    """
-    Update a widget's viewport (position, size, z-order) and recompose.
-    """
-    try
-      let idx = _find_widget(widget)?
-      (let w, _, let g) = _widgets(idx)?
-      _widgets(idx)? = (w, viewport, g)
-      _compose_and_render()
-    end
 
   be receive_grid(widget: Any tag, grid: Grid) =>
     """

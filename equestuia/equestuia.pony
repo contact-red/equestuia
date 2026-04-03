@@ -13,9 +13,7 @@ to a compositor that diffs and renders to the terminal.
 
 ## Layout
 
-- `Anchor` — compass direction (North, NorthEast, ..., Center)
-- `ViewPort` — anchor, size, offset, z-order for compositor registration
-- `PackOption` — packing options (expand, fill, padding)
+- `PackOption` — packing options (PackFixed, PackExpand, PackFill + padding)
 - `Alignment` — container alignment (AlignStart, AlignCenter, AlignEnd)
 
 ## Widgets
@@ -29,7 +27,8 @@ to a compositor that diffs and renders to the terminal.
 ## Infrastructure
 
 - `Compositor` — composites widget grids, diffs, renders to TerminalOutput.
-  Use `set_root` for the common case of a full-screen root widget.
+  Use `register_root` + `root.resize()` for the common full-screen case.
+- `UIBuilder` — declarative DSL parser for building widget trees
 - `InputActor` — parses terminal input, routes events, manages focus
 - `TerminalOutput` / `TerminalInput` — traits for I/O abstraction
 - `StdoutOutput` / `StdinInput` — default implementations

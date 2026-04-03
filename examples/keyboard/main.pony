@@ -31,7 +31,8 @@ actor Main
     input_actor.register_focusable(keyb)
 
     // Register root and kick off layout — must be after all children are added
-    compositor.set_root(vbox)
+    compositor.register_root(vbox)
+    vbox.resize(term_w, term_h)
 
 actor Keyboard is CompositeWidget
   """
