@@ -21,6 +21,7 @@ primitive ColorLookup
     | "bright-magenta" => BrightMagenta
     | "bright-cyan" => BrightCyan
     | "bright-white" => BrightWhite
+    | "rainbow" => Rainbow
     else
       None
     end

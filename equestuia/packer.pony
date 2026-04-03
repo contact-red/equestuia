@@ -12,21 +12,37 @@ type PackAxis is (Horizontal | Vertical)
 
 class val Allocation
   """
-  Result of packing: a child's position and size within the container.
+  Result of packing: a child's content placement and slot region within
+  the container. Content (x, y, width, height) is where the child renders.
+  Slot (slot_x, slot_y, slot_width, slot_height) is the full region the
+  child claims — identical to content except for PackExpand, where the
+  slot is larger and the content is centered within it.
   """
   let x: USize
   let y: USize
   let width: USize
   let height: USize
+  let slot_x: USize
+  let slot_y: USize
+  let slot_width: USize
+  let slot_height: USize
 
-  new val create(x': USize, y': USize, width': USize, height': USize) =>
+  new val create(
+    x': USize, y': USize, width': USize, height': USize,
+    slot_x': USize, slot_y': USize,
+    slot_width': USize, slot_height': USize)
+  =>
     """
-    Create an allocation with absolute position and size.
+    Create an allocation with content placement and slot region.
     """
     x = x'
     y = y'
     width = width'
     height = height'
+    slot_x = slot_x'
+    slot_y = slot_y'
+    slot_width = slot_width'
+    slot_height = slot_height'
 
 primitive Packer
   """
@@ -106,7 +122,7 @@ primitive Packer
     let result = recover iso
       let arr = Array[Allocation](children.size())
       for _ in Range(0, children.size()) do
-        arr.push(Allocation(0, 0, 0, 0))
+        arr.push(Allocation(0, 0, 0, 0, 0, 0, 0, 0))
       end
       arr
     end
@@ -179,9 +195,14 @@ primitive Packer
         | Vertical => container_w
         end
 
+        let slot_start = cursor
         let alloc = match axis
-        | Horizontal => Allocation(main_pos, 0, main_size, cross_size)
-        | Vertical => Allocation(0, main_pos, cross_size, main_size)
+        | Horizontal =>
+          Allocation(main_pos, 0, main_size, cross_size,
+            slot_start, 0, clamped_space, cross_size)
+        | Vertical =>
+          Allocation(0, main_pos, cross_size, main_size,
+            0, slot_start, cross_size, clamped_space)
         end
         result(i)? = consume alloc
 
@@ -277,8 +298,12 @@ primitive Packer
         end
 
         let alloc = match axis
-        | Horizontal => Allocation(main_pos, 0, size, cross_size)
-        | Vertical => Allocation(0, main_pos, cross_size, size)
+        | Horizontal =>
+          Allocation(main_pos, 0, size, cross_size,
+            main_pos, 0, size, cross_size)
+        | Vertical =>
+          Allocation(0, main_pos, cross_size, size,
+            0, main_pos, cross_size, size)
         end
         result(i)? = consume alloc
       end
@@ -290,13 +315,14 @@ primitive Packer
     | AlignStart => None
     | let _: (AlignCenter | AlignEnd) =>
       // Find the rightmost/bottommost extent of pack_start children
+      // Use slot bounds since they cover the full region including expand padding
       var max_extent: USize = 0
       for si in start_indices.values() do
         try
           let a = result(si)?
           let extent = match axis
-          | Horizontal => a.x + a.width
-          | Vertical => a.y + a.height
+          | Horizontal => a.slot_x + a.slot_width
+          | Vertical => a.slot_y + a.slot_height
           end
           if extent > max_extent then max_extent = extent end
         end
@@ -317,8 +343,12 @@ primitive Packer
           try
             let a = result(si)?
             let shifted = match axis
-            | Horizontal => Allocation(a.x + offset, a.y, a.width, a.height)
-            | Vertical => Allocation(a.x, a.y + offset, a.width, a.height)
+            | Horizontal =>
+              Allocation(a.x + offset, a.y, a.width, a.height,
+                a.slot_x + offset, a.slot_y, a.slot_width, a.slot_height)
+            | Vertical =>
+              Allocation(a.x, a.y + offset, a.width, a.height,
+                a.slot_x, a.slot_y + offset, a.slot_width, a.slot_height)
             end
             result(si)? = consume shifted
           end

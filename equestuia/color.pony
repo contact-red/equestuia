@@ -125,10 +125,36 @@ primitive BrightWhite
   fun fg_code(): U8 => 97
   fun bg_code(): U8 => 107
 
+primitive Rainbow
+  """
+  Sentinel: not a real ANSI color. Signals containers to cycle through
+  a palette of colors per packed slot, making expand vs fill visible.
+  Falls back to Default codes if it ever reaches the encoder directly.
+  """
+  fun fg_code(): U8 => 39
+  fun bg_code(): U8 => 49
+
 type Color is
   ( Default | Black | Red | Green | Yellow | Blue | Magenta | Cyan | White
   | BrightBlack | BrightRed | BrightGreen | BrightYellow | BrightBlue
-  | BrightMagenta | BrightCyan | BrightWhite )
+  | BrightMagenta | BrightCyan | BrightWhite | Rainbow )
+
+primitive _RainbowPalette
+  """
+  Cycling color palette for Rainbow debug-bg. Returns a color for a
+  given slot index, wrapping around the palette.
+  """
+  fun apply(index: USize): Color =>
+    match index % 6
+    | 0 => Red
+    | 1 => Green
+    | 2 => Blue
+    | 3 => Yellow
+    | 4 => Magenta
+    | 5 => Cyan
+    else
+      Red // unreachable
+    end
 
 interface val Colorable
   fun fg_code(): U8

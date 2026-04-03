@@ -108,32 +108,49 @@ actor Main
 
     match builder.build(
 """
-vbox
+vbox focusable
   pack-start *x3
-    hbox debug-bg=rainbow
-      pack-start 7x3 fixed
-        frame *x3
-          label "fixed"
-      pack-start 8x3 expand
-        frame *x3
-          label "expand"
-      pack-start 6x3 fill
-        frame *x3
-          label "fill"
-  pack-start *x1
-    hline
-  pack-start *x4 fill
     hbox
-      pack-start 21x6 fixed
-        counter #counter0 focusable
-      pack-start 21x6 expand
-        counter #counter1 focusable
-      pack-start 21x6 fill
-        counter #counter2 focusable
-  pack-start *x1
-    hline
-  pack-end *x1
-    label "Bottom of VBox" fg=red
+      pack-start 21x3 fixed
+        hbox
+          pack-start 7x3 fixed
+            frame 7x3
+              label "fixed"
+          pack-start 8x3 expand
+            frame 7x3
+              label "expand"
+          pack-start 6x3 fill
+            frame 6x3
+              label "fill"
+      pack-start 1x3 expand
+        label "x"
+  pack-start *x3
+    hbox
+      pack-start *x3 fill
+        hbox
+          pack-start 7x3 fixed
+            frame 7x3
+              label "fixed"
+          pack-start 8x3 expand
+            frame 7x3
+              label "expand"
+          pack-start 6x3 fill
+            frame 6x3
+              label "fill"
+  pack-start *x3
+    hbox
+      pack-start *x3 fill
+        hbox
+          pack-start 7x3 fixed
+            frame 7x3
+              label "fixed"
+          pack-start 8x3 expand
+            frame 7x3
+              label "expand"
+          pack-start 6x3 fill
+            frame 6x3
+              label "fill"
+
 """
 /*
 """

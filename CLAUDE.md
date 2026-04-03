@@ -11,9 +11,11 @@ make keyboard      # Build examples/keyboard
 make clean         # Remove build directory
 ```
 
+Run a single test by name substring: `build/equestuia --only=GridCreate` (compile first with `make test` or `corral run -- ponyc -o build equestuia`).
+
 Tests use `pony_test` and `pony_check` (property-based). The test harness is `equestuia/_test.pony` — register new tests there. All test files are `_test_*.pony` in the `equestuia/` directory.
 
-Build uses `corral run -- ponyc`. Run `corral fetch` (or `make fetch`) if dependencies are missing.
+No external dependencies — only Pony stdlib (`pony_test`, `pony_check`, `collections`, `signals`). Build uses `corral run -- ponyc`. Run `corral fetch` (or `make fetch`) if dependencies are missing.
 
 ## Architecture
 

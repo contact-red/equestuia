@@ -110,4 +110,5 @@ class val Cell is Equatable[Cell]
     | let _: BrightMagenta => match b | let _: BrightMagenta => true else false end
     | let _: BrightCyan => match b | let _: BrightCyan => true else false end
     | let _: BrightWhite => match b | let _: BrightWhite => true else false end
+    | let _: Rainbow => match b | let _: Rainbow => true else false end
     end

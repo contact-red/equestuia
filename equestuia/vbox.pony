@@ -23,12 +23,15 @@ actor VBox is CompositeWidget
   fun ref render(): Grid =>
     """
     Compose all child grids into a single grid using packer allocations.
+    When debug_bg is Rainbow, each allocation region gets a distinct
+    background color from a cycling palette, making expand vs fill visible.
     """
     let w = _state.width
     let h = _state.height
     let allocs = Packer.pack(Vertical, w, h, _pack_params(), _align)
 
     let empty = _state.empty_cell()
+    let is_rainbow = match _state.debug_bg | let _: Rainbow => true else false end
     let combined: Array[Cell] iso =
       recover iso
         let size = w * h
@@ -39,18 +42,36 @@ actor VBox is CompositeWidget
         cells
       end
 
-    for i in Range(0, _state.child_grids.size().min(allocs.size())) do
+    for i in Range(0, allocs.size()) do
       try
-        (_, let grid) = _state.child_grids(i)?
         let alloc = allocs(i)?
-        for row in Range(0, grid.height.min(alloc.height)) do
-          for col in Range(0, grid.width.min(alloc.width)) do
-            let dest_col = alloc.x + col
-            let dest_row = alloc.y + row
-            if (dest_col < w) and (dest_row < h) then
-              match grid(col, row)
-              | let c: Cell =>
-                combined((dest_row * w) + dest_col)? = c
+
+        // Fill slot region with per-slot color when rainbow
+        if is_rainbow then
+          let slot_cell = Cell(' ', 1, Default, _RainbowPalette(i), 0)
+          for row in Range(0, alloc.slot_height) do
+            for col in Range(0, alloc.slot_width.min(w)) do
+              let dest_col = alloc.slot_x + col
+              let dest_row = alloc.slot_y + row
+              if (dest_col < w) and (dest_row < h) then
+                combined((dest_row * w) + dest_col)? = slot_cell
+              end
+            end
+          end
+        end
+
+        // Composite child grid on top
+        if i < _state.child_grids.size() then
+          (_, let grid) = _state.child_grids(i)?
+          for row in Range(0, grid.height.min(alloc.height)) do
+            for col in Range(0, grid.width.min(alloc.width)) do
+              let dest_col = alloc.x + col
+              let dest_row = alloc.y + row
+              if (dest_col < w) and (dest_row < h) then
+                match grid(col, row)
+                | let c: Cell =>
+                  combined((dest_row * w) + dest_col)? = c
+                end
               end
             end
           end
