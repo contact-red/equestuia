@@ -75,3 +75,7 @@ actor \nodoc\ Main is TestList
     test(_TestInputActorScopeDisable)
     test(_TestInputActorScopeEnable)
     test(_TestInputActorNoScopeAlwaysEnabled)
+    test(_TestStackFirstChildActive)
+    test(_TestStackShowSwitches)
+    test(_TestStackShowInvalidNoOp)
+    test(_TestStackResizeAllChildren)
