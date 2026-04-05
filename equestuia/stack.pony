@@ -139,6 +139,26 @@ actor Stack is CompositeWidget
     end
     render_background()
 
+  be _register_focusable(widget: Widget tag, scope: Widget tag) =>
+    """
+    Package-private. Register a focusable widget with the InputActor, using
+    the given scope (a direct child of this Stack). Called by UIBuilder so
+    that register_focusable and disable_scope both go through this actor,
+    guaranteeing causal ordering on the InputActor.
+    """
+    match _input_actor
+    | let ia: InputActor tag =>
+      ia.register_focusable(widget, scope)
+    end
+
+  be _flush(cb: {()} val) =>
+    """
+    Package-private. Calls cb after all previously queued behaviors on this
+    actor have been processed. Used by tests to establish causal ordering
+    between add_child (which sends disable_scope) and a subsequent query.
+    """
+    cb()
+
   fun ref _is_active_widget(widget: Any tag): Bool =>
     """
     Check if the given widget is the currently active child.

@@ -256,12 +256,6 @@ class ref UIBuilder
           end
         end
 
-        // Register focusable (with stack scope if inside a stack child)
-        if focusable then
-          let focus_scope = _find_stack_child_scope(stack, indent)
-          _input_actor.register_focusable(widget, focus_scope)
-        end
-
         // Store by #id
         match widget_id
         | let id: String =>
@@ -339,6 +333,19 @@ class ref UIBuilder
 
         // Push onto stack
         stack.push((indent, widget, type_name))
+
+        // Register focusable (with stack scope if inside a stack child).
+        // Must happen after push so the parse stack has the scope entry.
+        // Routes through Stack so register_focusable and disable_scope
+        // are causally ordered on the InputActor.
+        if focusable then
+          match _find_stack_and_scope(stack)
+          | (let s: Stack tag, let scope: Widget tag) =>
+            s._register_focusable(widget, scope)
+          else
+            _input_actor.register_focusable(widget)
+          end
+        end
       end
     end
 
@@ -549,7 +556,7 @@ class ref UIBuilder
       end
     | "stack" =>
       match key
-      | "tabs" => None  // Handled in Task 5
+      | "tabs" => None  // Validated and applied in build() inline
       else
         return BuilderError(line_num,
           "unknown property '" + key + "' for " + type_name)
@@ -567,24 +574,26 @@ class ref UIBuilder
     end
     None
 
-  fun _find_stack_child_scope(
-    stack: Array[(USize, Widget tag, String)],
-    indent: USize)
-    : (Any tag | None)
+  fun _find_stack_and_scope(
+    stack: Array[(USize, Widget tag, String)])
+    : ((Stack tag, Widget tag) | None)
   =>
     """
-    Walk the parse stack looking for a "stack" entry. The entry immediately
-    after the stack is its direct child — that widget is the focus scope.
+    Walk the parse stack looking for a "stack" entry. Returns the Stack and
+    its direct child (the focus scope widget). The child is the entry
+    immediately after the stack in the parse stack.
     """
     var i: USize = 0
     while i < stack.size() do
       try
-        (_, _, let tn) = stack(i)?
+        (_, let stack_widget, let tn) = stack(i)?
         if tn == "stack" then
-          // The next entry in the stack is the stack's direct child
           try
             (_, let child_widget, _) = stack(i + 1)?
-            return child_widget
+            match (stack_widget, child_widget)
+            | (let s: Stack tag, let c: Widget tag) =>
+              return (s, c)
+            end
           end
         end
       end

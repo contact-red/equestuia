@@ -87,3 +87,4 @@ actor \nodoc\ Main is TestList
     test(_TestTabBarKeyboardActivate)
     test(_TestTabBarWrapAround)
     test(_TestTabBarSetActiveNoCallback)
+    test(_TestBuilderStackFocusScoping)
