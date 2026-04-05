@@ -24,6 +24,10 @@ class ref UIBuilder
     _registry("hline") = {(p: WidgetParent tag): Widget tag => HLine(p)} val
     _registry("vline") = {(p: WidgetParent tag): Widget tag => VLine(p)} val
     _registry("canvas") = {(p: WidgetParent tag): Widget tag => Canvas(p)} val
+    _registry("stack") = {(p: WidgetParent tag): Widget tag => Stack(p)} val
+    _registry("tabbar") = {(p: WidgetParent tag): Widget tag =>
+      TabBar(p, {(s: String val) => None} val)
+    } val
 
   fun ref register(type_name: String, factory: WidgetFactory) =>
     _registry(type_name) = factory
@@ -61,7 +65,15 @@ class ref UIBuilder
     // Pending pack context: (indent, is_pack_start, width, height, PackOption)
     var pending_pack: ((USize, Bool, USize, USize, PackOption) | None) = None
 
+    // Pending add context: (indent, child_name, optional tab label)
+    var pending_add: ((USize, String val, (String val | None)) | None) = None
+
     var root: (Widget tag | None) = None
+
+    // Track stacks needing tab wrapping: (stack_widget, position, tab_entries)
+    let stacks_needing_tabs:
+      Array[(Stack tag, String val, Array[(String val, String val)])]
+      = Array[(Stack tag, String val, Array[(String val, String val)])]
 
     for entry in parsed.values() do
       (let ln, let pl) = entry
@@ -121,6 +133,32 @@ class ref UIBuilder
         let pack_opt = PackOption(pack_mode)
         pending_pack = (indent, is_start, pack_w, pack_h, pack_opt)
 
+      | TokAdd =>
+        // Extract child name from remaining tokens
+        var add_name: (String val | None) = None
+        var add_tab: (String val | None) = None
+
+        for ti in Range(1, tokens.size()) do
+          try
+            let tok = tokens(ti)?
+            match tok.kind
+            | TokQuotedString =>
+              add_name = tok.value
+            | TokKeyValue =>
+              if tok.key == "tab" then
+                add_tab = tok.value
+              end
+            end
+          end
+        end
+
+        match add_name
+        | let name: String val =>
+          pending_add = (indent, name, add_tab)
+        | None =>
+          return BuilderError(ln, "add directive requires a quoted name")
+        end
+
       | TokWord =>
         let type_name = first_token.value
 
@@ -178,6 +216,27 @@ class ref UIBuilder
           end
         end
 
+        // Track stacks with tabs= for post-parse wrapping
+        if type_name == "stack" then
+          for ti in Range(1, tokens.size()) do
+            try
+              let tok = tokens(ti)?
+              if (tok.kind is TokKeyValue) and (tok.key == "tabs") then
+                match tok.value
+                | "north" | "south" | "east" | "west" =>
+                  match widget
+                  | let sw: Stack tag =>
+                    stacks_needing_tabs.push((sw, tok.value,
+                      Array[(String val, String val)]))
+                  end
+                else
+                  return BuilderError(ln, "invalid tabs position: " + tok.value)
+                end
+              end
+            end
+          end
+        end
+
         // Apply primary text
         match primary_text
         | let text: String =>
@@ -195,11 +254,6 @@ class ref UIBuilder
             | let tb: TextBox tag => tb.set_text(text)
             end
           end
-        end
-
-        // Register focusable
-        if focusable then
-          _input_actor.register_focusable(widget)
         end
 
         // Store by #id
@@ -230,12 +284,42 @@ class ref UIBuilder
           end
           pending_pack = None
         else
-          if stack.size() > 0 then
-            try
-              (_, let parent_widget, let parent_type) = stack(stack.size() - 1)?
-              if parent_type == "frame" then
-                match parent_widget
-                | let f: Frame tag => f.set_child(widget)
+          match pending_add
+          | (let ai: USize, let add_name: String val,
+             let add_tab: (String val | None)) =>
+            if stack.size() > 0 then
+              try
+                (_, let parent_widget, let parent_type) = stack(stack.size() - 1)?
+                if parent_type == "stack" then
+                  match parent_widget
+                  | let s: Stack tag =>
+                    s.add_child(add_name, widget)
+                    s.set_input_actor(_input_actor)
+                    // Track tab entry for stacks with tabs=
+                    for tab_info in stacks_needing_tabs.values() do
+                      (let tracked_stack, _, let tab_entries) = tab_info
+                      if (tracked_stack is s) then
+                        let label = match add_tab
+                        | let l: String val => l
+                        else add_name
+                        end
+                        tab_entries.push((add_name, label))
+                      end
+                    end
+                  end
+                end
+              end
+            end
+            _widgets_by_id(add_name) = widget
+            pending_add = None
+          else
+            if stack.size() > 0 then
+              try
+                (_, let parent_widget, let parent_type) = stack(stack.size() - 1)?
+                if parent_type == "frame" then
+                  match parent_widget
+                  | let f: Frame tag => f.set_child(widget)
+                  end
                 end
               end
             end
@@ -249,6 +333,76 @@ class ref UIBuilder
 
         // Push onto stack
         stack.push((indent, widget, type_name))
+
+        // Register focusable (with stack scope if inside a stack child).
+        // Must happen after push so the parse stack has the scope entry.
+        // Routes through Stack so register_focusable and disable_scope
+        // are causally ordered on the InputActor.
+        if focusable then
+          match _find_stack_and_scope(stack)
+          | (let s: Stack tag, let scope: Widget tag) =>
+            s._register_focusable(widget, scope)
+          else
+            _input_actor.register_focusable(widget)
+          end
+        end
+      end
+    end
+
+    // Post-parse: wrap stacks that have tabs= with container + TabBar
+    for tab_info in stacks_needing_tabs.values() do
+      (let sw, let position, let tab_entries) = tab_info
+      if tab_entries.size() == 0 then continue end
+
+      let is_vertical_layout =
+        (position == "north") or (position == "south")
+      let tab_orient: TabOrientation =
+        if is_vertical_layout then TabHorizontal else TabVertical end
+
+      let callback = {(key: String val)(sw) => sw.show(key)} val
+
+      if is_vertical_layout then
+        let wrapper = VBox(_compositor)
+        let tab_bar = TabBar(wrapper, callback, tab_orient)
+        for te in tab_entries.values() do
+          (let key, let label) = te
+          tab_bar.add_tab(key, label)
+        end
+        _input_actor.register_focusable(tab_bar)
+
+        match position
+        | "north" =>
+          wrapper.pack_start(tab_bar, 0, 1, PackOption(PackFixed))
+          wrapper.pack_start(sw, 0, 0, PackOption(PackFill))
+        | "south" =>
+          wrapper.pack_start(sw, 0, 0, PackOption(PackFill))
+          wrapper.pack_end(tab_bar, 0, 1, PackOption(PackFixed))
+        end
+
+        match root
+        | let r: Widget tag if r is sw => root = wrapper
+        end
+      else
+        let wrapper = HBox(_compositor)
+        let tab_bar = TabBar(wrapper, callback, tab_orient)
+        for te in tab_entries.values() do
+          (let key, let label) = te
+          tab_bar.add_tab(key, label)
+        end
+        _input_actor.register_focusable(tab_bar)
+
+        match position
+        | "west" =>
+          wrapper.pack_start(tab_bar, 12, 0, PackOption(PackFixed))
+          wrapper.pack_start(sw, 0, 0, PackOption(PackFill))
+        | "east" =>
+          wrapper.pack_start(sw, 0, 0, PackOption(PackFill))
+          wrapper.pack_end(tab_bar, 12, 0, PackOption(PackFixed))
+        end
+
+        match root
+        | let r: Widget tag if r is sw => root = wrapper
+        end
       end
     end
 
@@ -400,9 +554,50 @@ class ref UIBuilder
         return BuilderError(line_num,
           "unknown property '" + key + "' for " + type_name)
       end
+    | "stack" =>
+      match key
+      | "tabs" => None  // Validated and applied in build() inline
+      else
+        return BuilderError(line_num,
+          "unknown property '" + key + "' for " + type_name)
+      end
+    | "tabbar" =>
+      match key
+      | "orientation" => None  // Set at construction
+      else
+        return BuilderError(line_num,
+          "unknown property '" + key + "' for " + type_name)
+      end
     else
       return BuilderError(line_num,
         "unknown property '" + key + "' for " + type_name)
+    end
+    None
+
+  fun _find_stack_and_scope(
+    stack: Array[(USize, Widget tag, String)])
+    : ((Stack tag, Widget tag) | None)
+  =>
+    """
+    Walk the parse stack looking for a "stack" entry. Returns the Stack and
+    its direct child (the focus scope widget). The child is the entry
+    immediately after the stack in the parse stack.
+    """
+    var i: USize = 0
+    while i < stack.size() do
+      try
+        (_, let stack_widget, let tn) = stack(i)?
+        if tn == "stack" then
+          try
+            (_, let child_widget, _) = stack(i + 1)?
+            match (stack_widget, child_widget)
+            | (let s: Stack tag, let c: Widget tag) =>
+              return (s, c)
+            end
+          end
+        end
+      end
+      i = i + 1
     end
     None
 

@@ -149,6 +149,7 @@ primitive UIParser
     match word
     | "pack-start" => Token(TokPackStart, word)
     | "pack-end" => Token(TokPackEnd, word)
+    | "add" => Token(TokAdd, word)
     else
       if _is_mode(word) then
         Token(TokMode, word)
