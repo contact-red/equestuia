@@ -26,8 +26,8 @@ actor Compositor is WidgetParent
     // Send initial clear screen + hide cursor
     let init = recover iso
       let buf = Array[U8]
-      for b in AnsiEncoder.clear_screen().values() do buf.push(b) end
-      for b in AnsiEncoder.hide_cursor().values() do buf.push(b) end
+      buf.append(AnsiEncoder.clear_screen())
+      buf.append(AnsiEncoder.hide_cursor())
       buf
     end
     _output.write(consume init)
@@ -98,7 +98,7 @@ actor Compositor is WidgetParent
     _prev_frame = Grid.filled(width, height, Cell.empty())
     let clear = recover iso
       let buf = Array[U8]
-      for b in AnsiEncoder.clear_screen().values() do buf.push(b) end
+      buf.append(AnsiEncoder.clear_screen())
       buf
     end
     _output.write(consume clear)
@@ -169,14 +169,14 @@ actor Compositor is WidgetParent
         let buf = Array[U8]
         for change in changes.values() do
           (let col, let row, let cell) = change
-          for b in AnsiEncoder.move_to(col, row).values() do buf.push(b) end
-          for b in AnsiEncoder.reset().values() do buf.push(b) end
+          buf.append(AnsiEncoder.move_to(col, row))
+          buf.append(AnsiEncoder.reset())
           if cell.attrs != 0 then
-            for b in AnsiEncoder.set_attrs(cell.attrs).values() do buf.push(b) end
+            buf.append(AnsiEncoder.set_attrs(cell.attrs))
           end
-          for b in AnsiEncoder.set_fg(cell.fg).values() do buf.push(b) end
-          for b in AnsiEncoder.set_bg(cell.bg).values() do buf.push(b) end
-          for b in AnsiEncoder.write_char(cell.char).values() do buf.push(b) end
+          buf.append(AnsiEncoder.set_fg(cell.fg))
+          buf.append(AnsiEncoder.set_bg(cell.bg))
+          buf.append(AnsiEncoder.write_char(cell.char))
         end
         buf
       end
