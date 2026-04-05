@@ -74,6 +74,7 @@ actor \nodoc\ Main is TestList
     test(_TestBuilderComments)
     test(_TestBuilderStack)
     test(_TestBuilderStandaloneTabBar)
+    test(_TestBuilderStackTabsNorth)
     test(_TestInputActorScopeDisable)
     test(_TestInputActorScopeEnable)
     test(_TestInputActorNoScopeAlwaysEnabled)

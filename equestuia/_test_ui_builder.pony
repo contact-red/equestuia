@@ -137,3 +137,32 @@ class \nodoc\ iso _TestBuilderStandaloneTabBar is UnitTest
     | let _: Widget tag => None
     | None => h.fail("widget #mytabs not found")
     end
+
+class \nodoc\ iso _TestBuilderStackTabsNorth is UnitTest
+  fun name(): String => "UIBuilder.stack_tabs_north"
+
+  fun apply(h: TestHelper) =>
+    let output = _MockOutput
+    let input = _MockInput
+    (let tw, let th) = TermSize()
+    let compositor = Compositor(output, tw, th)
+    let input_actor = InputActor(input, compositor)
+    let builder = UIBuilder(compositor, input_actor)
+    match builder.build(
+      "stack #mystack tabs=north\n  add \"settings\" tab=\"Settings\"\n    label \"Settings page\"\n  add \"profile\" tab=\"Profile\"\n    label \"Profile page\"")
+    | let root: Widget tag =>
+      // Root should be VBox wrapper, not Stack
+      match root
+      | let _: VBox tag => None
+      | let _: Stack tag => h.fail("root should be VBox wrapper, not Stack")
+      else
+        h.fail("root should be VBox wrapper")
+      end
+    | let e: BuilderError => h.fail(e.string())
+    end
+    // Stack should still be accessible by #id
+    match builder.get_widget("mystack")
+    | let _: Stack tag => None
+    | let _: Widget tag => h.fail("mystack should be a Stack")
+    | None => h.fail("widget #mystack not found")
+    end
