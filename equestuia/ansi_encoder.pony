@@ -44,19 +44,19 @@ primitive AnsiEncoder
     recover val
       let buf = Array[U8]
       if (attrs and CellAttrs.bold()) != 0 then
-        for b in _sgr(1).values() do buf.push(b) end
+        buf.append(_sgr(1))
       end
       if (attrs and CellAttrs.dim()) != 0 then
-        for b in _sgr(2).values() do buf.push(b) end
+        buf.append(_sgr(2))
       end
       if (attrs and CellAttrs.underline()) != 0 then
-        for b in _sgr(4).values() do buf.push(b) end
+        buf.append(_sgr(4))
       end
       if (attrs and CellAttrs.blink()) != 0 then
-        for b in _sgr(5).values() do buf.push(b) end
+        buf.append(_sgr(5))
       end
       if (attrs and CellAttrs.reverse()) != 0 then
-        for b in _sgr(7).values() do buf.push(b) end
+        buf.append(_sgr(7))
       end
       buf
     end
