@@ -110,7 +110,7 @@ actor Main
 """
 vbox
   pack-start *x3
-    hbox debug-bg=rainbow
+    hbox
       pack-start 7x3 fixed
         frame *x3
           label "fixed"
@@ -119,7 +119,7 @@ vbox
           label "expand"
       pack-start 6x3 fill
         frame *x3
-          label "fill"
+          label "fill" align=center
   pack-start *x1
     hline
   pack-start *x4 fill

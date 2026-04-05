@@ -5,7 +5,7 @@ primitive DrawingPrimitives
   Utility functions for drawing common shapes into cell arrays.
   All functions are `tag` so they can be called inside `recover` blocks.
   """
-  fun tag draw_box(
+  fun draw_box(
     cells: Array[Cell] ref,
     grid_width: USize,
     grid_height: USize,
