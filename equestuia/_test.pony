@@ -72,3 +72,6 @@ actor \nodoc\ Main is TestList
     test(_TestBuilderUnknownType)
     test(_TestBuilderCustomWidget)
     test(_TestBuilderComments)
+    test(_TestInputActorScopeDisable)
+    test(_TestInputActorScopeEnable)
+    test(_TestInputActorNoScopeAlwaysEnabled)

@@ -18,10 +18,16 @@ actor InputActor is (InputListener & _HitTestRequester)
   """
   Reads terminal input, parses events, routes to focused widget.
   Listens for SIGWINCH to detect terminal resize.
+
+  Focus is scope-aware: widgets are registered with an optional scope token.
+  Disabling a scope removes its widgets from the active focus list.
+  Widgets with no scope (None) are always active.
   """
   var _parser: InputParser ref
   let _compositor: Compositor tag
+  let _focus_scopes: Array[(Widget tag, (Any tag | None))]
   let _focus_list: Array[Widget tag]
+  let _disabled_scopes: Array[Any tag]
   let _resize_list: Array[Widget tag]
   var _focus_index: USize = 0
   var _pending_mouse: (MouseEvent | None) = None
@@ -29,7 +35,9 @@ actor InputActor is (InputListener & _HitTestRequester)
   new create(input: TerminalInput tag, compositor: Compositor tag) =>
     _parser = InputParser
     _compositor = compositor
+    _focus_scopes = Array[(Widget tag, (Any tag | None))]
     _focus_list = Array[Widget tag]
+    _disabled_scopes = Array[Any tag]
     _resize_list = Array[Widget tag]
     input.subscribe(this)
     ifdef not windows then
@@ -44,14 +52,17 @@ actor InputActor is (InputListener & _HitTestRequester)
     (let w, let h) = TermSize()
     _route_resize(ResizeEvent(w, h))
 
-  be register_focusable(widget: Widget tag) =>
+  be register_focusable(widget: Widget tag, scope: (Any tag | None) = None) =>
     """
-    Add a widget to the focus list. The first registered widget receives
-    focus automatically.
+    Add a widget to the focus list with an optional scope. The first
+    registered widget in an enabled scope receives focus automatically.
     """
-    _focus_list.push(widget)
-    if _focus_list.size() == 1 then
-      widget.receive_focus()
+    _focus_scopes.push((widget, scope))
+    if _is_scope_enabled(scope) then
+      _focus_list.push(widget)
+      if _focus_list.size() == 1 then
+        widget.receive_focus()
+      end
     end
 
   be register_widget(widget: Widget tag) =>
@@ -62,8 +73,20 @@ actor InputActor is (InputListener & _HitTestRequester)
 
   be unregister_focusable(widget: Widget tag) =>
     """
-    Remove a widget from the focus list and adjust the focus index.
+    Remove a widget from both the scope registry and the focus list,
+    and adjust the focus index.
     """
+    // Remove from _focus_scopes
+    for i in Range[USize](0, _focus_scopes.size()) do
+      try
+        (let w, _) = _focus_scopes(i)?
+        if w is widget then
+          _focus_scopes.delete(i)?
+          break
+        end
+      end
+    end
+    // Remove from _focus_list
     try
       let idx = _find_in_focus_list(widget)?
       _focus_list.delete(idx)?
@@ -75,6 +98,48 @@ actor InputActor is (InputListener & _HitTestRequester)
         _focus_index = _focus_list.size() - 1
       end
     end
+
+  be disable_scope(scope: Any tag) =>
+    """
+    Disable a scope, removing its widgets from the active focus list.
+    If the currently focused widget is in the disabled scope, focus
+    moves to the first remaining widget.
+    """
+    // Don't double-add
+    for s in _disabled_scopes.values() do
+      if s is scope then return end
+    end
+    _disabled_scopes.push(scope)
+    _rebuild_focus_list()
+
+  be enable_scope(scope: Any tag) =>
+    """
+    Re-enable a previously disabled scope, restoring its widgets to
+    the active focus list. No-op if the scope is not currently disabled.
+    """
+    var found: Bool = false
+    for i in Range[USize](0, _disabled_scopes.size()) do
+      try
+        if _disabled_scopes(i)? is scope then
+          _disabled_scopes.delete(i)?
+          found = true
+          break
+        end
+      end
+    end
+    if found then
+      _rebuild_focus_list()
+    end
+
+  be _query_focus_state(cb: {(USize, USize)} val) =>
+    """
+    Query the current focus state (focus index and focus list size).
+    Package-private — used by tests to verify focus after async operations.
+    Messages to this behavior are ordered with other behaviors on this actor,
+    so querying after disable_scope/enable_scope guarantees the state reflects
+    those operations.
+    """
+    cb(_focus_index, _focus_list.size())
 
   be receive(data: Array[U8] val) =>
     """
@@ -137,3 +202,50 @@ actor InputActor is (InputListener & _HitTestRequester)
       end
     end
     error
+
+  fun ref _rebuild_focus_list() =>
+    """
+    Rebuild _focus_list from _focus_scopes, excluding disabled scopes.
+    Preserves focus on the current widget if it's still in the list,
+    otherwise focuses the first available widget.
+    """
+    // Remember the currently focused widget before rebuilding
+    let prev_focused: (Widget tag | None) =
+      try _focus_list(_focus_index)? else None end
+
+    // Blur the current widget — it may or may not retain focus
+    match prev_focused
+    | let w: Widget tag => w.receive_blur()
+    end
+
+    _focus_list.clear()
+    for entry in _focus_scopes.values() do
+      (let w, let s) = entry
+      if _is_scope_enabled(s) then
+        _focus_list.push(w)
+      end
+    end
+
+    // Try to keep focus on the same widget
+    _focus_index = 0
+    match prev_focused
+    | let pw: Widget tag =>
+      try
+        _focus_index = _find_in_focus_list(pw)?
+      end
+    end
+
+    // Focus the widget at the new index
+    try _focus_list(_focus_index)?.receive_focus() end
+
+  fun _is_scope_enabled(scope: (Any tag | None)): Bool =>
+    """
+    Check if a scope is enabled. None (no scope) is always enabled.
+    """
+    // Can't match (Any tag | None) because None is a subtype of Any tag.
+    // Use identity comparison instead.
+    if scope is None then return true end
+    for disabled in _disabled_scopes.values() do
+      if disabled is scope then return false end
+    end
+    true
