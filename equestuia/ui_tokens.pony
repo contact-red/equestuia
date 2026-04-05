@@ -3,6 +3,7 @@ use "collections"
 primitive TokWord
 primitive TokPackStart
 primitive TokPackEnd
+primitive TokAdd
 primitive TokQuotedString
 primitive TokId
 primitive TokKeyValue
@@ -13,14 +14,14 @@ class val Token
   """
   A single parsed token from a DSL line.
   """
-  let kind: (TokWord | TokPackStart | TokPackEnd | TokQuotedString
-    | TokId | TokKeyValue | TokSize | TokMode)
+  let kind: (TokWord | TokPackStart | TokPackEnd | TokAdd
+    | TokQuotedString | TokId | TokKeyValue | TokSize | TokMode)
   let value: String val
   let key: String val
 
   new val create(
-    kind': (TokWord | TokPackStart | TokPackEnd | TokQuotedString
-      | TokId | TokKeyValue | TokSize | TokMode),
+    kind': (TokWord | TokPackStart | TokPackEnd | TokAdd
+      | TokQuotedString | TokId | TokKeyValue | TokSize | TokMode),
     value': String val,
     key': String val = "")
   =>

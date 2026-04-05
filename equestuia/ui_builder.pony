@@ -24,6 +24,10 @@ class ref UIBuilder
     _registry("hline") = {(p: WidgetParent tag): Widget tag => HLine(p)} val
     _registry("vline") = {(p: WidgetParent tag): Widget tag => VLine(p)} val
     _registry("canvas") = {(p: WidgetParent tag): Widget tag => Canvas(p)} val
+    _registry("stack") = {(p: WidgetParent tag): Widget tag => Stack(p)} val
+    _registry("tabbar") = {(p: WidgetParent tag): Widget tag =>
+      TabBar(p, {(s: String val) => None} val)
+    } val
 
   fun ref register(type_name: String, factory: WidgetFactory) =>
     _registry(type_name) = factory
@@ -60,6 +64,9 @@ class ref UIBuilder
 
     // Pending pack context: (indent, is_pack_start, width, height, PackOption)
     var pending_pack: ((USize, Bool, USize, USize, PackOption) | None) = None
+
+    // Pending add context: (indent, child_name, optional tab label)
+    var pending_add: ((USize, String val, (String val | None)) | None) = None
 
     var root: (Widget tag | None) = None
 
@@ -120,6 +127,32 @@ class ref UIBuilder
 
         let pack_opt = PackOption(pack_mode)
         pending_pack = (indent, is_start, pack_w, pack_h, pack_opt)
+
+      | TokAdd =>
+        // Extract child name from remaining tokens
+        var add_name: (String val | None) = None
+        var add_tab: (String val | None) = None
+
+        for ti in Range(1, tokens.size()) do
+          try
+            let tok = tokens(ti)?
+            match tok.kind
+            | TokQuotedString =>
+              add_name = tok.value
+            | TokKeyValue =>
+              if tok.key == "tab" then
+                add_tab = tok.value
+              end
+            end
+          end
+        end
+
+        match add_name
+        | let name: String val =>
+          pending_add = (indent, name, add_tab)
+        | None =>
+          return BuilderError(ln, "add directive requires a quoted name")
+        end
 
       | TokWord =>
         let type_name = first_token.value
@@ -197,9 +230,10 @@ class ref UIBuilder
           end
         end
 
-        // Register focusable
+        // Register focusable (with stack scope if inside a stack child)
         if focusable then
-          _input_actor.register_focusable(widget)
+          let focus_scope = _find_stack_child_scope(stack, indent)
+          _input_actor.register_focusable(widget, focus_scope)
         end
 
         // Store by #id
@@ -230,12 +264,31 @@ class ref UIBuilder
           end
           pending_pack = None
         else
-          if stack.size() > 0 then
-            try
-              (_, let parent_widget, let parent_type) = stack(stack.size() - 1)?
-              if parent_type == "frame" then
-                match parent_widget
-                | let f: Frame tag => f.set_child(widget)
+          match pending_add
+          | (let ai: USize, let add_name: String val,
+             let add_tab: (String val | None)) =>
+            if stack.size() > 0 then
+              try
+                (_, let parent_widget, let parent_type) = stack(stack.size() - 1)?
+                if parent_type == "stack" then
+                  match parent_widget
+                  | let s: Stack tag =>
+                    s.add_child(add_name, widget)
+                    s.set_input_actor(_input_actor)
+                  end
+                end
+              end
+            end
+            _widgets_by_id(add_name) = widget
+            pending_add = None
+          else
+            if stack.size() > 0 then
+              try
+                (_, let parent_widget, let parent_type) = stack(stack.size() - 1)?
+                if parent_type == "frame" then
+                  match parent_widget
+                  | let f: Frame tag => f.set_child(widget)
+                  end
                 end
               end
             end
@@ -400,9 +453,48 @@ class ref UIBuilder
         return BuilderError(line_num,
           "unknown property '" + key + "' for " + type_name)
       end
+    | "stack" =>
+      match key
+      | "tabs" => None  // Handled in Task 5
+      else
+        return BuilderError(line_num,
+          "unknown property '" + key + "' for " + type_name)
+      end
+    | "tabbar" =>
+      match key
+      | "orientation" => None  // Set at construction
+      else
+        return BuilderError(line_num,
+          "unknown property '" + key + "' for " + type_name)
+      end
     else
       return BuilderError(line_num,
         "unknown property '" + key + "' for " + type_name)
+    end
+    None
+
+  fun _find_stack_child_scope(
+    stack: Array[(USize, Widget tag, String)],
+    indent: USize)
+    : (Any tag | None)
+  =>
+    """
+    Walk the parse stack looking for a "stack" entry. The entry immediately
+    after the stack is its direct child — that widget is the focus scope.
+    """
+    var i: USize = 0
+    while i < stack.size() do
+      try
+        (_, _, let tn) = stack(i)?
+        if tn == "stack" then
+          // The next entry in the stack is the stack's direct child
+          try
+            (_, let child_widget, _) = stack(i + 1)?
+            return child_widget
+          end
+        end
+      end
+      i = i + 1
     end
     None
 

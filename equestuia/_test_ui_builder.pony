@@ -90,3 +90,50 @@ class \nodoc\ iso _TestBuilderComments is UnitTest
     | let _: Widget tag => None
     | let e: BuilderError => h.fail(e.string())
     end
+
+class \nodoc\ iso _TestBuilderStack is UnitTest
+  fun name(): String => "UIBuilder.stack"
+
+  fun apply(h: TestHelper) =>
+    let output = _MockOutput
+    let input = _MockInput
+    (let tw, let th) = TermSize()
+    let compositor = Compositor(output, tw, th)
+    let input_actor = InputActor(input, compositor)
+    let builder = UIBuilder(compositor, input_actor)
+    match builder.build(
+      "stack #mystack\n  add \"page1\"\n    label \"Page One\"\n  add \"page2\"\n    label \"Page Two\"")
+    | let _: Widget tag => None
+    | let e: BuilderError => h.fail(e.string())
+    end
+    match builder.get_widget("mystack")
+    | let _: Widget tag => None
+    | None => h.fail("widget #mystack not found")
+    end
+    match builder.get_widget("page1")
+    | let _: Widget tag => None
+    | None => h.fail("widget page1 not found")
+    end
+    match builder.get_widget("page2")
+    | let _: Widget tag => None
+    | None => h.fail("widget page2 not found")
+    end
+
+class \nodoc\ iso _TestBuilderStandaloneTabBar is UnitTest
+  fun name(): String => "UIBuilder.standalone_tabbar"
+
+  fun apply(h: TestHelper) =>
+    let output = _MockOutput
+    let input = _MockInput
+    (let tw, let th) = TermSize()
+    let compositor = Compositor(output, tw, th)
+    let input_actor = InputActor(input, compositor)
+    let builder = UIBuilder(compositor, input_actor)
+    match builder.build("tabbar #mytabs")
+    | let _: Widget tag => None
+    | let e: BuilderError => h.fail(e.string())
+    end
+    match builder.get_widget("mytabs")
+    | let _: Widget tag => None
+    | None => h.fail("widget #mytabs not found")
+    end
