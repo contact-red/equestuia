@@ -79,3 +79,8 @@ actor \nodoc\ Main is TestList
     test(_TestStackShowSwitches)
     test(_TestStackShowInvalidNoOp)
     test(_TestStackResizeAllChildren)
+    test(_TestTabBarHorizontalRender)
+    test(_TestTabBarVerticalRender)
+    test(_TestTabBarKeyboardActivate)
+    test(_TestTabBarWrapAround)
+    test(_TestTabBarSetActiveNoCallback)
