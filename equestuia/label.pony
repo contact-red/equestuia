@@ -39,6 +39,20 @@ actor Label is Widget
     _bg = bg
     render_and_send()
 
+  be set_fg(fg: Color) =>
+    """
+    Update foreground color only and re-render.
+    """
+    _fg = fg
+    render_and_send()
+
+  be set_bg(bg: Color) =>
+    """
+    Update background color only and re-render.
+    """
+    _bg = bg
+    render_and_send()
+
   be set_align(align: Alignment) =>
     """
     Set text alignment and re-render.

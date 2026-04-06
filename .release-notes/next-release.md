@@ -13,3 +13,18 @@ Enter key presses were silently ignored. Terminals with the ICRNL flag (the defa
 ## Add Stack example
 
 New `examples/stack` demonstrates tabbed navigation with a Stack widget using `tabs=north`, multiple pages with different content, and keyboard-driven tab switching.
+
+## Fix UIBuilder bg= silently overwriting fg=
+
+Setting both `fg=` and `bg=` on a Label or TextBox in the DSL (e.g., `label "Hi" fg=green bg=red`) silently discarded the foreground color — `bg=` hardcoded white as the foreground. Both properties now apply independently.
+
+## Add set_fg/set_bg behaviors to Label and TextBox
+
+Label and TextBox now have `set_fg` and `set_bg` behaviors for changing foreground or background color independently. The existing `set_color` behavior (which sets both at once) is unchanged.
+
+```pony
+label.set_fg(Green)
+label.set_bg(Red)
+// or set both at once, as before:
+label.set_color(Green, Red)
+```

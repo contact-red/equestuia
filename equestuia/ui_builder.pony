@@ -471,7 +471,7 @@ class ref UIBuilder
         match ColorLookup(value)
         | let c: Color =>
           match widget
-          | let l: Label tag => l.set_color(c)
+          | let l: Label tag => l.set_fg(c)
           end
         | None =>
           return BuilderError(line_num, "unknown color: " + value)
@@ -480,7 +480,7 @@ class ref UIBuilder
         match ColorLookup(value)
         | let c: Color =>
           match widget
-          | let l: Label tag => l.set_color(White, c)
+          | let l: Label tag => l.set_bg(c)
           end
         | None =>
           return BuilderError(line_num, "unknown color: " + value)
@@ -563,7 +563,7 @@ class ref UIBuilder
         match ColorLookup(value)
         | let c: Color =>
           match widget
-          | let tb: TextBox tag => tb.set_color(c)
+          | let tb: TextBox tag => tb.set_fg(c)
           end
         | None =>
           return BuilderError(line_num, "unknown color: " + value)
@@ -572,7 +572,7 @@ class ref UIBuilder
         match ColorLookup(value)
         | let c: Color =>
           match widget
-          | let tb: TextBox tag => tb.set_color(White, c)
+          | let tb: TextBox tag => tb.set_bg(c)
           end
         | None =>
           return BuilderError(line_num, "unknown color: " + value)

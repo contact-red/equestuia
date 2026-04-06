@@ -9,10 +9,12 @@ All notable changes to this project will be documented in this file. This projec
 - Smol performance improvement ([PR #1](https://github.com/contact-red/equestuia/pull/1))
 - Fix UIBuilder tabs= wrapping rendering ([PR #2](https://github.com/contact-red/equestuia/pull/2))
 - Fix Enter key not recognized ([PR #2](https://github.com/contact-red/equestuia/pull/2))
+- Fix UIBuilder bg= silently overwriting fg= ([PR #3](https://github.com/contact-red/equestuia/pull/3))
 
 ### Added
 
 - Add Stack example ([PR #2](https://github.com/contact-red/equestuia/pull/2))
+- Add set_fg/set_bg behaviors to Label and TextBox ([PR #3](https://github.com/contact-red/equestuia/pull/3))
 
 ### Changed
 

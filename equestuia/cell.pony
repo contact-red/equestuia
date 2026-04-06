@@ -92,23 +92,4 @@ class val Cell is Equatable[Cell]
     not eq(that)
 
   fun tag _color_eq(a: Color, b: Color): Bool =>
-    match a
-    | let _: Default => match b | let _: Default => true else false end
-    | let _: Black => match b | let _: Black => true else false end
-    | let _: Red => match b | let _: Red => true else false end
-    | let _: Green => match b | let _: Green => true else false end
-    | let _: Yellow => match b | let _: Yellow => true else false end
-    | let _: Blue => match b | let _: Blue => true else false end
-    | let _: Magenta => match b | let _: Magenta => true else false end
-    | let _: Cyan => match b | let _: Cyan => true else false end
-    | let _: White => match b | let _: White => true else false end
-    | let _: BrightBlack => match b | let _: BrightBlack => true else false end
-    | let _: BrightRed => match b | let _: BrightRed => true else false end
-    | let _: BrightGreen => match b | let _: BrightGreen => true else false end
-    | let _: BrightYellow => match b | let _: BrightYellow => true else false end
-    | let _: BrightBlue => match b | let _: BrightBlue => true else false end
-    | let _: BrightMagenta => match b | let _: BrightMagenta => true else false end
-    | let _: BrightCyan => match b | let _: BrightCyan => true else false end
-    | let _: BrightWhite => match b | let _: BrightWhite => true else false end
-    | let _: Rainbow => match b | let _: Rainbow => true else false end
-    end
+    a is b
