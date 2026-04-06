@@ -42,6 +42,20 @@ actor TextBox is Widget
     _bg = bg
     render_and_send()
 
+  be set_fg(fg: Color) =>
+    """
+    Update foreground color only and re-render.
+    """
+    _fg = fg
+    render_and_send()
+
+  be set_bg(bg: Color) =>
+    """
+    Update background color only and re-render.
+    """
+    _bg = bg
+    render_and_send()
+
   be set_wrap(wrap: Bool) =>
     """
     Enable or disable word wrapping and re-render.
