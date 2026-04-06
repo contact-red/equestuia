@@ -13,4 +13,3 @@ Enter key presses were silently ignored. Terminals with the ICRNL flag (the defa
 ## Add Stack example
 
 New `examples/stack` demonstrates tabbed navigation with a Stack widget using `tabs=north`, multiple pages with different content, and keyboard-driven tab switching.
-
