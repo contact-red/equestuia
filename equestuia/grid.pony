@@ -48,6 +48,13 @@ class val Grid
       end
     end
 
+  fun _cell(col: USize, row: USize): Cell ? =>
+    """
+    Package-private direct cell access. Skips bounds checking and union
+    return — caller must guarantee col < width and row < height.
+    """
+    _cells((row * width) + col)?
+
 primitive GridFactory
   """
   Validated constructor for Grid.

@@ -16,8 +16,9 @@ primitive Differ
         let changes = Array[(USize, USize, Cell)]
         for row in Range(0, curr.height) do
           for col in Range(0, curr.width) do
-            match (prev(col, row), curr(col, row))
-            | (let p: Cell, let c: Cell) =>
+            try
+              let p = prev._cell(col, row)?
+              let c = curr._cell(col, row)?
               if p != c then
                 changes.push((col, row, c))
               end
@@ -33,9 +34,7 @@ primitive Differ
       let changes = Array[(USize, USize, Cell)]
       for row in Range(0, curr.height) do
         for col in Range(0, curr.width) do
-          match curr(col, row)
-          | let c: Cell => changes.push((col, row, c))
-          end
+          try changes.push((col, row, curr._cell(col, row)?)) end
         end
       end
       changes
