@@ -142,14 +142,14 @@ actor Compositor is WidgetParent
             let screen_col = ax + gcol
             if screen_col >= sw then break end
 
-            match g(gcol, grow)
-            | let cell: Cell =>
+            try
+              let cell = g._cell(gcol, grow)?
               // Wide char clipping: if a wide char would extend past right edge,
               // replace with a space
               if (cell.width == 2) and ((screen_col + 1) >= sw) then
-                try cells((screen_row * sw) + screen_col)? = Cell.empty() end
+                cells((screen_row * sw) + screen_col)? = Cell.empty()
               else
-                try cells((screen_row * sw) + screen_col)? = cell end
+                cells((screen_row * sw) + screen_col)? = cell
               end
             end
           end
