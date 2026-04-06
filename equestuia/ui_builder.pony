@@ -70,10 +70,12 @@ class ref UIBuilder
 
     var root: (Widget tag | None) = None
 
-    // Track stacks needing tab wrapping: (stack_widget, position, tab_entries)
+    // Track stacks needing tab wrapping: (wrapper, stack, position, tab_entries)
     let stacks_needing_tabs:
-      Array[(Stack tag, String val, Array[(String val, String val)])]
-      = Array[(Stack tag, String val, Array[(String val, String val)])]
+      Array[((VBox tag | HBox tag), Stack tag, String val,
+        Array[(String val, String val)])]
+      = Array[((VBox tag | HBox tag), Stack tag, String val,
+        Array[(String val, String val)])]
 
     for entry in parsed.values() do
       (let ln, let pl) = entry
@@ -185,8 +187,64 @@ class ref UIBuilder
           return BuilderError(ln, "unknown widget type: " + type_name)
         end
 
-        // Create widget
-        let widget: Widget tag = factory(parent)
+        // Pre-scan for tabs= on stack widgets to create wrapper first
+        var tabs_position: (String val | None) = None
+        if type_name == "stack" then
+          for ti in Range(1, tokens.size()) do
+            try
+              let tok = tokens(ti)?
+              if (tok.kind is TokKeyValue) and (tok.key == "tabs") then
+                match tok.value
+                | "north" | "south" | "east" | "west" =>
+                  tabs_position = tok.value
+                else
+                  return BuilderError(ln,
+                    "invalid tabs position: " + tok.value)
+                end
+              end
+            end
+          end
+        end
+
+        // Create widget — interpose wrapper for tabs= stacks so the
+        // Stack's immutable parent points to the wrapper from birth.
+        var tabs_wrapper: ((VBox tag | HBox tag) | None) = None
+        let effective_parent: WidgetParent tag = match tabs_position
+        | let pos: String val =>
+          let is_vertical = (pos == "north") or (pos == "south")
+          if is_vertical then
+            let w = VBox(parent)
+            tabs_wrapper = w
+            w
+          else
+            let w = HBox(parent)
+            tabs_wrapper = w
+            w
+          end
+        else
+          parent
+        end
+
+        let widget: Widget tag = factory(effective_parent)
+
+        // wire_widget is what gets wired to the DSL parent — the wrapper
+        // when tabs= is present, or the widget itself otherwise
+        let wire_widget: Widget tag = match tabs_wrapper
+        | let v: VBox tag => v
+        | let h: HBox tag => h
+        else
+          widget
+        end
+
+        // Track wrapper for post-parse TabBar addition
+        match (tabs_position, tabs_wrapper)
+        | (let pos: String val, let wrapper: (VBox tag | HBox tag)) =>
+          match widget
+          | let sw: Stack tag =>
+            stacks_needing_tabs.push(
+              (wrapper, sw, pos, Array[(String val, String val)]))
+          end
+        end
 
         // Process remaining tokens
         var primary_text: (String | None) = None
@@ -211,27 +269,6 @@ class ref UIBuilder
               else
                 return BuilderError(ln,
                   "unexpected token: " + tok.value)
-              end
-            end
-          end
-        end
-
-        // Track stacks with tabs= for post-parse wrapping
-        if type_name == "stack" then
-          for ti in Range(1, tokens.size()) do
-            try
-              let tok = tokens(ti)?
-              if (tok.kind is TokKeyValue) and (tok.key == "tabs") then
-                match tok.value
-                | "north" | "south" | "east" | "west" =>
-                  match widget
-                  | let sw: Stack tag =>
-                    stacks_needing_tabs.push((sw, tok.value,
-                      Array[(String val, String val)]))
-                  end
-                else
-                  return BuilderError(ln, "invalid tabs position: " + tok.value)
-                end
               end
             end
           end
@@ -262,7 +299,8 @@ class ref UIBuilder
           _widgets_by_id(id) = widget
         end
 
-        // Wire to parent
+        // Wire to parent — use wire_widget so the wrapper (not the
+        // Stack) is what the DSL parent sees when tabs= is active.
         match pending_pack
         | (let pi: USize, let is_start: Bool, let pw: USize, let ph: USize,
            let po: PackOption) =>
@@ -271,13 +309,13 @@ class ref UIBuilder
               (_, let parent_widget, _) = stack(stack.size() - 1)?
               if is_start then
                 match parent_widget
-                | let vb: VBox tag => vb.pack_start(widget, pw, ph, po)
-                | let hb: HBox tag => hb.pack_start(widget, pw, ph, po)
+                | let vb: VBox tag => vb.pack_start(wire_widget, pw, ph, po)
+                | let hb: HBox tag => hb.pack_start(wire_widget, pw, ph, po)
                 end
               else
                 match parent_widget
-                | let vb: VBox tag => vb.pack_end(widget, pw, ph, po)
-                | let hb: HBox tag => hb.pack_end(widget, pw, ph, po)
+                | let vb: VBox tag => vb.pack_end(wire_widget, pw, ph, po)
+                | let hb: HBox tag => hb.pack_end(wire_widget, pw, ph, po)
                 end
               end
             end
@@ -293,11 +331,11 @@ class ref UIBuilder
                 if parent_type == "stack" then
                   match parent_widget
                   | let s: Stack tag =>
-                    s.add_child(add_name, widget)
+                    s.add_child(add_name, wire_widget)
                     s.set_input_actor(_input_actor)
                     // Track tab entry for stacks with tabs=
                     for tab_info in stacks_needing_tabs.values() do
-                      (let tracked_stack, _, let tab_entries) = tab_info
+                      (_, let tracked_stack, _, let tab_entries) = tab_info
                       if (tracked_stack is s) then
                         let label = match add_tab
                         | let l: String val => l
@@ -318,7 +356,7 @@ class ref UIBuilder
                 (_, let parent_widget, let parent_type) = stack(stack.size() - 1)?
                 if parent_type == "frame" then
                   match parent_widget
-                  | let f: Frame tag => f.set_child(widget)
+                  | let f: Frame tag => f.set_child(wire_widget)
                   end
                 end
               end
@@ -328,7 +366,7 @@ class ref UIBuilder
 
         // Track root
         match root
-        | None => root = widget
+        | None => root = wire_widget
         end
 
         // Push onto stack
@@ -349,9 +387,11 @@ class ref UIBuilder
       end
     end
 
-    // Post-parse: wrap stacks that have tabs= with container + TabBar
+    // Post-parse: add TabBar to pre-created wrappers and pack both
+    // children. The wrapper was created during parsing so the Stack's
+    // immutable parent already points to it.
     for tab_info in stacks_needing_tabs.values() do
-      (let sw, let position, let tab_entries) = tab_info
+      (let wrapper, let sw, let position, let tab_entries) = tab_info
       if tab_entries.size() == 0 then continue end
 
       let is_vertical_layout =
@@ -361,9 +401,9 @@ class ref UIBuilder
 
       let callback = {(key: String val)(sw) => sw.show(key)} val
 
-      if is_vertical_layout then
-        let wrapper = VBox(_compositor)
-        let tab_bar = TabBar(wrapper, callback, tab_orient)
+      match wrapper
+      | let vbox: VBox tag =>
+        let tab_bar = TabBar(vbox, callback, tab_orient)
         for te in tab_entries.values() do
           (let key, let label) = te
           tab_bar.add_tab(key, label)
@@ -372,19 +412,14 @@ class ref UIBuilder
 
         match position
         | "north" =>
-          wrapper.pack_start(tab_bar, 0, 1, PackOption(PackFixed))
-          wrapper.pack_start(sw, 0, 0, PackOption(PackFill))
+          vbox.pack_start(tab_bar, 0, 1, PackOption(PackFixed))
+          vbox.pack_start(sw, 0, 0, PackOption(PackFill))
         | "south" =>
-          wrapper.pack_start(sw, 0, 0, PackOption(PackFill))
-          wrapper.pack_end(tab_bar, 0, 1, PackOption(PackFixed))
+          vbox.pack_start(sw, 0, 0, PackOption(PackFill))
+          vbox.pack_end(tab_bar, 0, 1, PackOption(PackFixed))
         end
-
-        match root
-        | let r: Widget tag if r is sw => root = wrapper
-        end
-      else
-        let wrapper = HBox(_compositor)
-        let tab_bar = TabBar(wrapper, callback, tab_orient)
+      | let hbox: HBox tag =>
+        let tab_bar = TabBar(hbox, callback, tab_orient)
         for te in tab_entries.values() do
           (let key, let label) = te
           tab_bar.add_tab(key, label)
@@ -393,15 +428,11 @@ class ref UIBuilder
 
         match position
         | "west" =>
-          wrapper.pack_start(tab_bar, 12, 0, PackOption(PackFixed))
-          wrapper.pack_start(sw, 0, 0, PackOption(PackFill))
+          hbox.pack_start(tab_bar, 12, 0, PackOption(PackFixed))
+          hbox.pack_start(sw, 0, 0, PackOption(PackFill))
         | "east" =>
-          wrapper.pack_start(sw, 0, 0, PackOption(PackFill))
-          wrapper.pack_end(tab_bar, 12, 0, PackOption(PackFixed))
-        end
-
-        match root
-        | let r: Widget tag if r is sw => root = wrapper
+          hbox.pack_start(sw, 0, 0, PackOption(PackFill))
+          hbox.pack_end(tab_bar, 12, 0, PackOption(PackFixed))
         end
       end
     end

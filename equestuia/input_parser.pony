@@ -72,7 +72,7 @@ class ref InputParser
     end
 
   fun ref _ground(byte: U8) =>
-    if byte == 13 then
+    if (byte == 13) or (byte == 10) then
       _out.push(KeyEvent(Enter))
     elseif byte == 9 then
       _out.push(KeyEvent(Tab))
