@@ -31,6 +31,10 @@ jobs:
           INPUT_SITE_URL: "https://equestuia.contact.red"
           INPUT_LIBRARY_NAME: "equestuia"
           INPUT_DOCS_BUILD_DIR: "build/equestuia-docs"
+      - name: Apply custom theme
+        run: cp -r docs-theme/assets/* build/equestuia-docs/docs/assets/
+      - name: Rebuild site with custom theme
+        run: cd build/equestuia-docs && mkdocs build
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
