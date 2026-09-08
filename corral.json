@@ -6,7 +6,7 @@
   "info": {
     "name": "equestuia",
     "description": "Intermediate-mode TUI library for Pony",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "license": "BSD-2-Clause"
   }
 }
