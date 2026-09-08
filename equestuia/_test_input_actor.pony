@@ -1,5 +1,6 @@
 use "pony_test"
 use "collections"
+use "signals"
 
 actor _FocusRecorder is Widget
   """
@@ -43,7 +44,7 @@ class \nodoc\ iso _TestInputActorScopeDisable is UnitTest
     let input = _MockInput
     (let tw, let th) = TermSize()
     let compositor = Compositor(output, tw, th)
-    let input_actor = InputActor(input, compositor)
+    let input_actor = InputActor(SignalAuth(h.env.root), input, compositor)
 
     let parent = _NullParent
     let scope = _ScopeToken
@@ -79,7 +80,7 @@ class \nodoc\ iso _TestInputActorScopeEnable is UnitTest
     let input = _MockInput
     (let tw, let th) = TermSize()
     let compositor = Compositor(output, tw, th)
-    let input_actor = InputActor(input, compositor)
+    let input_actor = InputActor(SignalAuth(h.env.root), input, compositor)
 
     let parent = _NullParent
     let scope = _ScopeToken
@@ -114,7 +115,7 @@ class \nodoc\ iso _TestInputActorNoScopeAlwaysEnabled is UnitTest
     let input = _MockInput
     (let tw, let th) = TermSize()
     let compositor = Compositor(output, tw, th)
-    let input_actor = InputActor(input, compositor)
+    let input_actor = InputActor(SignalAuth(h.env.root), input, compositor)
 
     let parent = _NullParent
     let scope = _ScopeToken

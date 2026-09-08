@@ -32,7 +32,11 @@ actor InputActor is (InputListener & _HitTestRequester)
   var _focus_index: USize = 0
   var _pending_mouse: (MouseEvent | None) = None
 
-  new create(input: TerminalInput tag, compositor: Compositor tag) =>
+  new create(
+    signal_auth: SignalAuth,
+    input: TerminalInput tag,
+    compositor: Compositor tag)
+  =>
     _parser = InputParser
     _compositor = compositor
     _focus_scopes = Array[(Widget tag, (Any tag | None))]
@@ -41,7 +45,10 @@ actor InputActor is (InputListener & _HitTestRequester)
     _resize_list = Array[Widget tag]
     input.subscribe(this)
     ifdef not windows then
-      SignalHandler(recover _WinchNotify(this) end, Sig.winch())
+      match MakeHandleableSignal(Sig.winch())
+      | let sig: HandleableSignal =>
+        SignalHandler(signal_auth, recover _WinchNotify(this) end, sig)
+      end
     end
 
   be _winch() =>

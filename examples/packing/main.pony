@@ -1,5 +1,6 @@
 use "../../equestuia"
 use "collections"
+use "signals"
 
 actor Main
   new create(env: Env) =>
@@ -8,7 +9,7 @@ actor Main
 
     (let term_w, let term_h) = TermSize()
     let compositor = Compositor(output, term_w, term_h)
-    let input_actor = InputActor(input, compositor)
+    let input_actor = InputActor(SignalAuth(env.root), input, compositor)
 
     let builder = UIBuilder(compositor, input_actor)
 
