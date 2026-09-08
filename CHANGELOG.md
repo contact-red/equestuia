@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ### Changed
 
+- Update InputActor for ponyc 0.71.0 ([PR #5](https://github.com/contact-red/equestuia/pull/5))
 
 ## [0.1.2] - 2026-04-06
 
