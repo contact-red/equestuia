@@ -1,4 +1,5 @@
 use "pony_test"
+use "signals"
 
 // Mock output that discards writes — avoids stdin subscription keeping runtime alive
 actor _MockOutput is TerminalOutput
@@ -17,7 +18,7 @@ class \nodoc\ iso _TestBuilderSimpleLabel is UnitTest
     let input = _MockInput
     (let tw, let th) = TermSize()
     let compositor = Compositor(output, tw, th)
-    let input_actor = InputActor(input, compositor)
+    let input_actor = InputActor(SignalAuth(h.env.root), input, compositor)
 
     let builder = UIBuilder(compositor, input_actor)
     match builder.build(
@@ -39,7 +40,7 @@ class \nodoc\ iso _TestBuilderUnknownType is UnitTest
     let input = _MockInput
     (let tw, let th) = TermSize()
     let compositor = Compositor(output, tw, th)
-    let input_actor = InputActor(input, compositor)
+    let input_actor = InputActor(SignalAuth(h.env.root), input, compositor)
 
     let builder = UIBuilder(compositor, input_actor)
     match builder.build("bogus")
@@ -58,7 +59,7 @@ class \nodoc\ iso _TestBuilderCustomWidget is UnitTest
     let input = _MockInput
     (let tw, let th) = TermSize()
     let compositor = Compositor(output, tw, th)
-    let input_actor = InputActor(input, compositor)
+    let input_actor = InputActor(SignalAuth(h.env.root), input, compositor)
 
     let builder = UIBuilder(compositor, input_actor)
     builder.register("custom",
@@ -82,7 +83,7 @@ class \nodoc\ iso _TestBuilderComments is UnitTest
     let input = _MockInput
     (let tw, let th) = TermSize()
     let compositor = Compositor(output, tw, th)
-    let input_actor = InputActor(input, compositor)
+    let input_actor = InputActor(SignalAuth(h.env.root), input, compositor)
 
     let builder = UIBuilder(compositor, input_actor)
     match builder.build(
@@ -99,7 +100,7 @@ class \nodoc\ iso _TestBuilderStack is UnitTest
     let input = _MockInput
     (let tw, let th) = TermSize()
     let compositor = Compositor(output, tw, th)
-    let input_actor = InputActor(input, compositor)
+    let input_actor = InputActor(SignalAuth(h.env.root), input, compositor)
     let builder = UIBuilder(compositor, input_actor)
     match builder.build(
       "stack #mystack\n  add \"page1\"\n    label \"Page One\"\n  add \"page2\"\n    label \"Page Two\"")
@@ -127,7 +128,7 @@ class \nodoc\ iso _TestBuilderStandaloneTabBar is UnitTest
     let input = _MockInput
     (let tw, let th) = TermSize()
     let compositor = Compositor(output, tw, th)
-    let input_actor = InputActor(input, compositor)
+    let input_actor = InputActor(SignalAuth(h.env.root), input, compositor)
     let builder = UIBuilder(compositor, input_actor)
     match builder.build("tabbar #mytabs")
     | let _: Widget tag => None
@@ -146,7 +147,7 @@ class \nodoc\ iso _TestBuilderStackTabsNorth is UnitTest
     let input = _MockInput
     (let tw, let th) = TermSize()
     let compositor = Compositor(output, tw, th)
-    let input_actor = InputActor(input, compositor)
+    let input_actor = InputActor(SignalAuth(h.env.root), input, compositor)
     let builder = UIBuilder(compositor, input_actor)
     match builder.build(
       "stack #mystack tabs=north\n  add \"settings\" tab=\"Settings\"\n    label \"Settings page\"\n  add \"profile\" tab=\"Profile\"\n    label \"Profile page\"")
@@ -179,7 +180,7 @@ class \nodoc\ iso _TestBuilderStackFocusScoping is UnitTest
     let input = _MockInput
     (let tw, let th) = TermSize()
     let compositor = Compositor(output, tw, th)
-    let input_actor = InputActor(input, compositor)
+    let input_actor = InputActor(SignalAuth(h.env.root), input, compositor)
 
     let builder = UIBuilder(compositor, input_actor)
     match builder.build(

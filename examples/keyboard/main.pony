@@ -1,5 +1,6 @@
 use "../../equestuia"
 use "collections"
+use "signals"
 
 actor Main
   let keymap: Map[String, Label] = Map[String, Label]
@@ -10,7 +11,7 @@ actor Main
 
     (let term_w, let term_h) = TermSize()
     let compositor = Compositor(output, term_w, term_h)
-    let input_actor = InputActor(input, compositor)
+    let input_actor = InputActor(SignalAuth(env.root), input, compositor)
 
     let vbox = VBox(compositor)
     vbox.set_debug_bg(Blue)
