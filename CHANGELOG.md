@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ### Fixed
 
+- Fix terminal input requiring Enter ([PR #6](https://github.com/contact-red/equestuia/pull/6))
 
 ### Added
 
