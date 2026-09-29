@@ -1,3 +1,5 @@
+use "term"
+
 trait tag TerminalOutput
   """
   Abstraction for terminal output. Users can substitute network sockets,
@@ -46,21 +48,25 @@ actor StdoutOutput is TerminalOutput
 actor StdinInput is TerminalInput
   """
   Default TerminalInput that reads from stdin via Pony's InputNotify.
+  Enables raw terminal input while subscribed and restores it on dispose.
   """
   var _listener: (InputListener tag | None) = None
   let _env: Env
+  let _terminal_auth: TerminalAuth
 
   new create(env: Env) =>
     """
     Create a StdinInput bound to the given Env.
     """
     _env = env
+    _terminal_auth = TerminalAuth(env.root)
 
   be subscribe(listener: InputListener tag) =>
     """
     Subscribe a listener to receive raw bytes from stdin.
     """
     _listener = listener
+    TerminalMode.set_raw(_terminal_auth)
     _env.input(
       object iso is InputNotify
         let _l: InputListener tag = listener
@@ -79,4 +85,5 @@ actor StdinInput is TerminalInput
     allowing the runtime to shut down once no actors have pending work.
     """
     _listener = None
+    TerminalMode.restore(_terminal_auth)
     _env.input(None, 0)
